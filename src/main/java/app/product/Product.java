@@ -9,7 +9,6 @@ import java.util.HashSet;
  */
 public class Product implements Comparable<Product>, Printable, Serializable {
     private static int nextId = 1;//общий счётчик id для всех продуктов
-    private static HashSet<Integer> idSet = new HashSet<>();
     private final int id; //Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
     private String name; //Поле не может быть null, Строка не может быть пустой
     private Coordinates coordinates; //Поле не может быть null
@@ -39,12 +38,10 @@ public class Product implements Comparable<Product>, Printable, Serializable {
      * @param unitOfMeasure единица измерения, не может являться null
      * @param owner владелец продукта, не может являться null
      */
-    public Product(String name, Coordinates coordinates, float price,
+    public Product(int id, String name, Coordinates coordinates, float price,
                    String partNumber, Double manufactureCost, UnitOfMeasure unitOfMeasure,
                    Person owner) {
-        while (idSet.contains(nextId)) { nextId++; }
-        id = nextId;
-        nextId++;
+        this.id = id;
 
         setName(name);
         setCoordinates(coordinates);
@@ -130,15 +127,6 @@ public class Product implements Comparable<Product>, Printable, Serializable {
      */
     public static boolean isPartNumberBusy(String number) {
         return allPartNumbers.contains(number);
-    }
-
-    /**
-     * Помечает указанный id занятым каким-то объектом.
-     *
-     * @param id значение id, которе сообщается как занятое
-     */
-    public static void setIdBusy(int id) {
-        idSet.add(id);
     }
 
     @Override

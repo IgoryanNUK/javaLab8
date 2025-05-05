@@ -30,7 +30,6 @@ public class CollectionManager {
             if (!validateCollection()) {
                 throw new CorruptedFile(System.getenv(envVar));
             }
-            setIdsBusy();
         } catch (FileNotFound f) {
             products = new TreeSet<>();
         } catch (Exception e) {
@@ -113,12 +112,6 @@ public class CollectionManager {
     }
 
 
-    /**
-     * Сообщает классу Product, какие id уже заняты.
-     */
-    private void setIdsBusy() {
-        products.forEach(e -> Product.setIdBusy(e.getId()));
-    }
 
     /**
      * Проверяет валидность объектов коллекции.

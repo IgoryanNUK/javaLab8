@@ -128,9 +128,6 @@ public class RequestHandler {
             throw new RequestReadingException(RequestType.ADD, e);
         }
 
-        collection.addProduct(new Product(name, new Coordinates(x, y), price, partNumber, manufactureCost,
-                unitOfMeasure, new Person(ownerName, height, eyeColor, nationality)));
-
         return new MessageResp("***Продукт " + name + " успешно добавлен в коллекцию***");
 
 
