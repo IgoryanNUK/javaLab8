@@ -24,8 +24,8 @@ public class Database {
         }
     }
 
-    private void createStudentsTable() {
-        int count = executeUpdate("create table products(id serial primary key," +
+    private void createStudentsTables() {
+        /*int count = executeUpdate("create table products(id serial primary key," +
                 "name text not null," +
                 "x double precision not null," +
                 "y double precision not null," +
@@ -37,8 +37,8 @@ public class Database {
                 "personName text," +
                 "personHeight float4," +
                 "eyeColor varchar(20) not null check (eyeColor IN ('GREEN', 'YELLOW', 'ORANGE', 'BROWN'))," +
-                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN')))");
-        System.out.println(count);
+                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN')))");*/
+        executeUpdate("create table users (id serial primary key, name text, password text)");
     }
 
     /**
@@ -47,7 +47,7 @@ public class Database {
      * @param query запрос получения продуктов
      * @return список продуктов)))
      */
-    private List<Product> executeSelect(String query) {
+    public List<Product> executeSelect(String query) {
         try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
             Statement statement = connection.createStatement();
             if (statement.execute(query)) {
@@ -110,6 +110,26 @@ public class Database {
         return new Product(id, name, new Coordinates(x, y), price, partNumber, mC, uOM, new Person(ownerName, ownerHeight, color, nat));
     }
 
+    /**
+     *
+     *
+     * @param user
+     * @return
+     * @throws SQLException
+     */
+    public String getUserPassword(String user) throws SQLException{
+        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
+            PreparedStatement statement = connection.prepareStatement("select password from users where name = ?");
+            statement.setString(1, user);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getString(0);
+            } else {
+                throw new UserNotFound(user);
+            }
+        }
+    }
+
 
     /**
      * Выполняет запрос, связанный с изменением таблицы базы данных.
@@ -117,7 +137,7 @@ public class Database {
      * @param query текст запроса
      * @return количество изменённых строк
      */
-    private int executeUpdate(String query) {
+    public int executeUpdate(String query) {
         try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
             Statement statement = connection.createStatement();
             statement.execute(query);
@@ -131,11 +151,4 @@ public class Database {
         }
         return -1;
     }
-
-
-
-
-
-
-
 }

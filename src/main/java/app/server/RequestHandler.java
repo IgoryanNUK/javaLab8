@@ -72,7 +72,6 @@ public class RequestHandler {
     public Response getInfo() {
         String resp = "Данные о коллекции:" +
                 "\nтип: " + collection.getCollectionName() +
-                "\nдата инициализации: " + collection.getInitDate() +
                 "\nколичество элементов: " + collection.getSize();
 
         return new MessageResp(resp);
