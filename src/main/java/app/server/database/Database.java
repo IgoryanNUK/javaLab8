@@ -24,8 +24,9 @@ public class Database {
         }
     }
 
-    private void createStudentsTables() {
-        /*int count = executeUpdate("create table products(id serial primary key," +
+    public void createTables() throws SQLException {
+        executeUpdate("create table users (id serial primary key, name text, password text)");
+        executeUpdate("create table products(id serial primary key," +
                 "name text not null," +
                 "x double precision not null," +
                 "y double precision not null," +
@@ -37,8 +38,8 @@ public class Database {
                 "personName text," +
                 "personHeight float4," +
                 "eyeColor varchar(20) not null check (eyeColor IN ('GREEN', 'YELLOW', 'ORANGE', 'BROWN'))," +
-                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN')))");*/
-        executeUpdate("create table users (id serial primary key, name text, password text)");
+                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN'))," +
+                "userId serial references users(id))");
     }
 
     /**
@@ -47,7 +48,7 @@ public class Database {
      * @param query запрос получения продуктов
      * @return список продуктов)))
      */
-    public List<Product> executeSelect(String query) {
+    public List<Product> executeSelect(String query) throws SQLException {
         try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
             Statement statement = connection.createStatement();
             if (statement.execute(query)) {
@@ -63,9 +64,6 @@ public class Database {
             } else {
                 System.out.println("Wrong query type (use executeUpdate instead)");
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
         }
         return null;
     }
@@ -137,7 +135,7 @@ public class Database {
      * @param query текст запроса
      * @return количество изменённых строк
      */
-    public int executeUpdate(String query) {
+    public int executeUpdate(String query) throws SQLException {
         try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
             Statement statement = connection.createStatement();
             statement.execute(query);
@@ -145,10 +143,6 @@ public class Database {
             statement.close();
             connection.close();
             return count;
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
         }
-        return -1;
     }
 }

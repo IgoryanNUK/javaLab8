@@ -42,6 +42,7 @@ public class Server {
 
             String[] loginAndPassword = authorisation();
             collection = new CollectionManager(loginAndPassword[0], loginAndPassword[1]);
+            System.out.println("*authorisation succeed*");
 
             connection = new ConnetionGetter(server);
             handler = new RequestHandler(collection);
@@ -53,8 +54,8 @@ public class Server {
 
     private String[] authorisation() {
         Console console = System.console();
-        String login = console .readLine("Логин: ");
-        String password = new String(console.readPassword("Пароль: "));
+        String login = console.readLine("Login: ");
+        String password = new String(console.readPassword("Password: "));
         return new String[]{login, password};
     }
 

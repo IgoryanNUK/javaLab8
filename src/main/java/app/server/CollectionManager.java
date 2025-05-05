@@ -3,6 +3,7 @@ package app.server;
 import app.product.Product;
 import app.server.database.Database;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,14 +14,23 @@ public class CollectionManager {
     private CopyOnWriteArraySet<Product> products;
     private final Database database;
 
-    public CollectionManager(String dbUser, String dbPassword) {
+    public CollectionManager(String dbUser, String dbPassword) throws SQLException {
         database = new Database(dbUser, dbPassword);
 
         products = new CopyOnWriteArraySet<>(load());
     }
 
-    private List<Product> load() {
-        return database.executeSelect("select * from products");
+    private List<Product> load() throws SQLException {
+        try {
+            return database.executeSelect("select * from products");
+        } catch(SQLException s) {
+            if (s.getMessage().startsWith("ОШИБКА: отношение \"products\" не существует")) {
+                database.createTables();
+                return new ArrayList<>();
+            } else {
+                throw s;
+            }
+        }
     }
 
     public void add(Product ... ps) {
