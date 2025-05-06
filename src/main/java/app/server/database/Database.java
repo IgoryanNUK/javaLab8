@@ -30,7 +30,7 @@ public class Database {
     }
 
     public void createTables() throws SQLException {
-        //executeUpdate("create table users (id serial primary key, name text, password text)");
+        executeUpdate("create table users (id serial primary key, name text, password text)");
         executeUpdate("create table products(id serial primary key," +
                 "name text not null," +
                 "x double precision not null," +
@@ -54,7 +54,7 @@ public class Database {
      * @return список продуктов)))
      */
     public List<Product> executeSelect(String query) throws SQLException {
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
+        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", user, password)) {
             Statement statement = connection.createStatement();
             if (statement.execute(query)) {
                 ResultSet result = statement.getResultSet();
@@ -146,7 +146,7 @@ public class Database {
      * @throws SQLException
      */
     public String getUserPassword(String user) throws SQLException{
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", this.user, password)) {
+        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", this.user, password)) {
             PreparedStatement statement = connection.prepareStatement("select password from users where name = ?");
             statement.setString(1, user);
             ResultSet resultSet = statement.executeQuery();
@@ -160,7 +160,7 @@ public class Database {
 
     public int getUserId(String user, String password) throws SQLException {
         int resp;
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", this.user, this.password)) {
+        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", this.user, this.password)) {
             PreparedStatement statement = connection.prepareStatement("select id from users where name = ? and password = ?");
             statement.setString(1, user);
             statement.setString(2, password);
@@ -192,7 +192,7 @@ public class Database {
      * @return количество изменённых строк
      */
     public int executeUpdate(String query) throws SQLException {
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
+        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", user, password)) {
             Statement statement = connection.createStatement();
             statement.execute(query);
             int count = statement.getUpdateCount();

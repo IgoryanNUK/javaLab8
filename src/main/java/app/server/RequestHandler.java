@@ -13,12 +13,40 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class RequestHandler {
+public class RequestHandler extends Thread {
     private CollectionManager collection;
+    private ConcurrentHashMap<String, Request> requests;
+    private String id;
+    private ConcurrentHashMap<String, Response> responses;
 
-    public RequestHandler(CollectionManager collection) {
+    public RequestHandler(CollectionManager collection, ConcurrentHashMap<String, Request> requests,  ConcurrentHashMap<String, Response> responses, String id) {
         this.collection = collection;
+        this.requests = requests;
+        this.id = id;
+        this.responses = responses;
+    }
+
+
+    @Override
+    public void run() {
+        try {
+            Request req;
+            synchronized (requests) {
+                while (requests.isEmpty()) requests.wait();
+                req = requests.remove(id);
+                requests.notifyAll();
+            }
+
+            Response resp = handleRequest(req);
+            synchronized (responses) {
+                responses.put(id, resp);
+                responses.notifyAll();
+            }
+        } catch (Exception e) {
+            throw new UnknownException(e);
+        }
     }
 
     /**

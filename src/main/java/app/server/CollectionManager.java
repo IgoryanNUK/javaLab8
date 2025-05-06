@@ -29,7 +29,7 @@ public class CollectionManager {
         try {
             return database.executeSelect("select * from products");
         } catch(SQLException s) {
-            if (s.getMessage().startsWith("ОШИБКА: отношение \"products\" не существует")) {
+            if (s.getMessage().startsWith("ОШИБКА: отношение \"products\" не существует") | s.getMessage().startsWith("ERROR: relation \"products\" does not exist")) {
                 database.createTables();
                 return new ArrayList<>();
             } else {

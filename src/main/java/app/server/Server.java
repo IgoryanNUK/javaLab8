@@ -12,6 +12,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -26,6 +30,14 @@ public class Server {
     private Logger logger;
     private final BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
     private boolean isRunning = true;
+
+    private int MAX_T = 5;
+    private final ExecutorService readPool = Executors.newFixedThreadPool(MAX_T);
+    private final ExecutorService executePool = Executors.newFixedThreadPool(MAX_T);
+    private final ExecutorService sendPool = Executors.newCachedThreadPool();
+
+    private final ConcurrentHashMap<String, Request> requests = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, Response> responses = new ConcurrentHashMap<>();
 
     {
         try {
@@ -45,7 +57,6 @@ public class Server {
             System.out.println("*authorisation succeed*");
 
             connection = new ConnetionGetter(server);
-            handler = new RequestHandler(collection);
             logger.info("Start success");
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,9 +85,15 @@ public class Server {
                 Socket sock = connection.getConnection();
                 if (sock.isBound()) {
                     try {
-                        Request req = Communicator.read(sock);
-                        Response response = handler.handleRequest(req);
-                        Communicator.send(response, sock);
+                        String id = Math.random()+"";
+                        RequestGetter getter = new RequestGetter(sock, requests, id);
+                        readPool.execute(getter);
+
+                        RequestHandler handler = new RequestHandler(collection, requests, responses, id);
+                        executePool.execute(handler);
+
+                        ResponseSender sender = new ResponseSender(responses, sock, id);
+                        sendPool.execute(sender);
                     } catch (Exception e) {
                         Communicator.send(new MessageResp("Произошла ошибка на сервере((((("),sock);
                         logger.log(Level.SEVERE, "Ошибка в работе сервера: ", e);
