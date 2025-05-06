@@ -2,6 +2,7 @@ package app.client;
 
 import app.exceptions.UnavaluableServer;
 import app.messages.requests.Request;
+import app.messages.response.AccessResp;
 import app.messages.response.MessageResp;
 import app.messages.response.ProductsResp;
 import app.messages.response.Response;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 public class ClientConnectionManager {
     private final int port;
     private final InetAddress host;
+    private final Client app;
 
     public static void main(String[] args) {
         /*Object o = new Object();
@@ -43,9 +45,10 @@ public class ClientConnectionManager {
      * @param hostName имя хоста сервера
      * @throws Exception непредвиденная ошибка
      */
-    public ClientConnectionManager(int port, String hostName) throws Exception {
+    public ClientConnectionManager(int port, String hostName, Client app) throws Exception {
         this.port = port;
         host = InetAddress.getLocalHost();
+        this.app = app;
     }
 
 
@@ -113,6 +116,13 @@ public class ClientConnectionManager {
         return switch(resp.getType()) {
             case MESSAGE -> ((MessageResp) resp).getMessage();
             case PRODUCTS -> ((ProductsResp) resp).getProducts().stream().map(Product::print).collect(Collectors.joining("\n"));
+            case ACCESS -> {
+                AccessResp ar = (AccessResp) resp;
+                String l = ar.getLogin();
+                String p = ar.getPassword();
+                app.setAccess(l, p);
+                yield "Вы успешно авторизованы.";
+            }
             default -> "Ошибка чтения ответа";
         };
     }

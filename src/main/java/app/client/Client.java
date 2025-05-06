@@ -8,6 +8,8 @@ public class Client {
     private final BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
     private final CommandManager commandManager = new CommandManager(this);
     private final UserIOManager ioManager = new UserIOManager(userInput, System.out);
+    private String login = null;
+    private String password = null;
 
     public static void main(String ... args) {
         Client client = new Client();
@@ -25,4 +27,20 @@ public class Client {
     }
 
     public void stop() { isRunning = false; }
+
+    public void setLoginAndPassword(String login, String password) {
+        this.login = login;
+        this.password = password;
+    }
+
+    public String getLogin() {return login;}
+
+    public String getPassword() {return password;}
+
+    public void setAccess(String login, String pswd) {
+        this.password = pswd;
+        this.login = login;
+
+        commandManager.addRestCommands();
+    }
 }

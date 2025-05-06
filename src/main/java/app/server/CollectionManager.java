@@ -33,6 +33,10 @@ public class CollectionManager {
         }
     }
 
+    public boolean register(String login, String password) throws SQLException {
+        return database.register(login, password);
+    }
+
     public void add(Product ... ps) {
         //изменения!!!
         products.addAll(Arrays.asList(ps));

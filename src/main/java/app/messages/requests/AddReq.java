@@ -1,7 +1,7 @@
 package app.messages.requests;
 
 
-public class AddReq implements Request {
+public class AddReq extends Request {
     private final RequestType type;
     private final String jsonMessage;
 

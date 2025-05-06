@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 /**
  * Класс запроса на удаление объектов из коллекции.
  */
-public class RemoveReq implements Request {
+public class RemoveReq extends Request {
     private final RequestType type = RequestType.REMOVE;
     private final Condition predicate;
 

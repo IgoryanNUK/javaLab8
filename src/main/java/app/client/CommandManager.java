@@ -19,15 +19,20 @@ public class CommandManager {
    public CommandManager(Client app) {
        this.app = app;
 
-        addCommand(new Exit(app), new RemoveById(), new Show(),
-                new RemoveGreater(), new RemoveLower(), new RemoveByPartNumber(),
-                new Help(this), new Clear(), new Info(), new History(this),
-                new FilterStartsWithPN(), new FilterGreaterThanUOM(),
-                new Add(), new Update(),
-                new ExecuteScript(this));
-//
-//                new ExecuteScript();
-    }
+       addDefaultCommands();
+   }
+
+   private void addDefaultCommands() {
+       addCommand(new Exit(app), new Help(this), new History(this), new Register(app));
+   }
+
+   public void addRestCommands() {
+       addCommand(new RemoveById(), new Show(),
+               new RemoveGreater(), new RemoveLower(), new RemoveByPartNumber(), new Clear(), new Info(),
+               new FilterStartsWithPN(), new FilterGreaterThanUOM(),
+               new Add(), new Update(),
+               new ExecuteScript(this));
+   }
 
     /**
      * Добавляет команды в функционал приложения.
@@ -51,8 +56,11 @@ public class CommandManager {
             } else {
                 String[] args = commandRequest.trim().split(" ");
                 Request req = getRequestByName(args, ioManager);
+
                 if (req != null) {
-                    ClientConnectionManager cm = new ClientConnectionManager(4027, "Igoryan-Laptop");
+                    req.setLogin(app.getLogin());
+                    req.setPassword(app.getPassword());
+                    ClientConnectionManager cm = new ClientConnectionManager(4027, "Igoryan-Laptop", app);
                     ioManager.getOutput().println(cm.askServer(req));
                 }
             }

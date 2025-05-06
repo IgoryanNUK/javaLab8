@@ -78,6 +78,7 @@ public class Server {
                         Communicator.send(response, sock);
                     } catch (Exception e) {
                         Communicator.send(new MessageResp("Произошла ошибка на сервере((((("),sock);
+                        logger.log(Level.SEVERE, "Ошибка в работе сервера: ", e);
                     }
                 }
             } catch (Exception e) {

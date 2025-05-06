@@ -1,6 +1,6 @@
 package app.messages.requests;
 
-public class InfoReq implements Request {
+public class InfoReq extends Request {
     private RequestType type = RequestType.INFO;
 
     @Override

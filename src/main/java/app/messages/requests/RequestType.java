@@ -1,5 +1,5 @@
 package app.messages.requests;
 
 public enum RequestType {
-    REMOVE, GET, INFO, ADD, UPDATE
+    REMOVE, GET, INFO, ADD, UPDATE, REG, AUTH
 }

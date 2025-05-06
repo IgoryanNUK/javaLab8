@@ -1,7 +1,11 @@
 package app.server.database;
 
+import app.exceptions.UnknownException;
 import app.product.*;
 
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,7 +120,7 @@ public class Database {
      * @throws SQLException
      */
     public String getUserPassword(String user) throws SQLException{
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", user, password)) {
+        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", this.user, password)) {
             PreparedStatement statement = connection.prepareStatement("select password from users where name = ?");
             statement.setString(1, user);
             ResultSet resultSet = statement.executeQuery();
@@ -125,6 +129,25 @@ public class Database {
             } else {
                 throw new UserNotFound(user);
             }
+        }
+    }
+
+
+    public boolean register(String login, String password) throws SQLException {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            return md.digest(password.getBytes("UTF-8")).equals(getUserPassword(login));
+        } catch(UserNotFound u) {
+            System.out.println("here");
+            int i = executeUpdate("insert into users (name, password) values ('" + login +"', '"+ password + "')");
+            System.out.println("not here");
+            if (i==1) {
+                return true;
+            } else {
+                throw new UnknownException(new Throwable());
+            }
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
     }
 

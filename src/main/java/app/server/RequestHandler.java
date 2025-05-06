@@ -1,7 +1,9 @@
 package app.server;
 
 import app.exceptions.RequestReadingException;
+import app.exceptions.UnknownException;
 import app.messages.requests.*;
+import app.messages.response.AccessResp;
 import app.messages.response.MessageResp;
 import app.messages.response.ProductsResp;
 import app.messages.response.Response;
@@ -9,6 +11,7 @@ import app.product.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class RequestHandler {
@@ -33,6 +36,7 @@ public class RequestHandler {
             case INFO -> getInfo();
             case ADD -> add((AddReq) req);
             case UPDATE -> update((AddReq) req);
+            case REG -> reg((RegistrationReq) req);
             default -> new MessageResp("Ошибка чтения комманды");
         };
     }
@@ -213,5 +217,23 @@ public class RequestHandler {
             if (val.toString().equals(string)) return val;
         }
         return null;
+    }
+
+
+    private Response reg(RegistrationReq req) {
+        try {
+
+            String login = req.getLogin();
+            String password = req.getPassword();
+
+            if (collection.register(req.getLogin(), req.getPassword())) {
+                return new AccessResp(login, password);
+            } else {
+                return new MessageResp("Не удалось зарегистрировать пользователя. Данный логин жуе занят.");
+            }
+        } catch (Exception e) {
+            throw new UnknownException(e);
+        }
+
     }
 }

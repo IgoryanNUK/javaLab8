@@ -1,7 +1,16 @@
 package app.messages.requests;
 
-import java.io.Serializable;
+public abstract class Request implements IRequest {
+    private String login;
+    private String password;
 
-public interface Request extends Serializable {
-    RequestType getType();
+    @Override
+    public void setLogin(String login) {this.login = login;}
+
+    @Override
+    public void setPassword(String pswd) {this.password = pswd;}
+
+    public String getLogin() {return login;}
+
+    public String getPassword() {return password;}
 }

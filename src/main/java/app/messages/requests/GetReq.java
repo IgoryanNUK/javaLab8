@@ -4,7 +4,7 @@ import app.product.Product;
 
 import java.util.function.Predicate;
 
-public class GetReq implements Request {
+public class GetReq extends Request {
     private final RequestType type = RequestType.GET;
     private final Condition condition;
 
