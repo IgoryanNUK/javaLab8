@@ -37,6 +37,7 @@ public class RequestHandler {
             case ADD -> add((AddReq) req);
             case UPDATE -> update((AddReq) req);
             case REG -> reg((RegistrationReq) req);
+            case AUTH -> auth((AuthReq) req);
             default -> new MessageResp("Ошибка чтения комманды");
         };
     }
@@ -131,7 +132,15 @@ public class RequestHandler {
             throw new RequestReadingException(RequestType.ADD, e);
         }
 
-        return new MessageResp("***Продукт " + name + " успешно добавлен в коллекцию***");
+        String mes;
+        if (collection.add(req.getLogin(), req.getPassword(),new Product(0, name, new Coordinates(x, y), price, partNumber, manufactureCost,
+                unitOfMeasure, new Person(ownerName, height, eyeColor, nationality)))) {
+            mes = "***Продукт " + name + " успешно добавлен в коллекцию***";
+        } else {
+            mes = "***Не удалось добавить объект в коллекцию***";
+        }
+
+        return new MessageResp(mes);
 
 
     }
@@ -222,7 +231,6 @@ public class RequestHandler {
 
     private Response reg(RegistrationReq req) {
         try {
-
             String login = req.getLogin();
             String password = req.getPassword();
 
@@ -235,5 +243,16 @@ public class RequestHandler {
             throw new UnknownException(e);
         }
 
+    }
+
+    private Response auth(AuthReq req) {
+        String login = req.getLogin();
+        String password = req.getPassword();
+
+        if (collection.auth(login, password)) {
+            return new AccessResp(login, password);
+        } else {
+            return new MessageResp("Ошибка авторизации. Указан неправильный логин или пароль.");
+        }
     }
 }

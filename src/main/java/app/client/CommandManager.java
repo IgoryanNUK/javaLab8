@@ -23,7 +23,7 @@ public class CommandManager {
    }
 
    private void addDefaultCommands() {
-       addCommand(new Exit(app), new Help(this), new History(this), new Register(app));
+       addCommand(new Exit(app), new Help(this), new History(this), new Register(app), new Authorisation(app));
    }
 
    public void addRestCommands() {
@@ -39,7 +39,13 @@ public class CommandManager {
      * @param cs команды
      */
     public void addCommand(Command ...cs) {
+        full:
         for (Command c : cs) {
+            for (String name : commands.keySet()) {
+                if (name.equals(c.getName().split(" ")[0])) {
+                    continue full;
+                }
+            }
             commands.put(c.getName().split(" ")[0], c);
         }
     }

@@ -48,6 +48,7 @@ public class Server {
             handler = new RequestHandler(collection);
             logger.info("Start success");
         } catch (Exception e) {
+            e.printStackTrace();
             logger.log(Level.SEVERE, "Server start error: ", e);
         }
     }

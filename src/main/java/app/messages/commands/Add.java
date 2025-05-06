@@ -40,7 +40,8 @@ public class Add extends Command {
             jsonNode.put("ownerName", p.getName());
             jsonNode.put("height", p.getHeight());
             jsonNode.put("eyeColor", p.getEyeColor().toString());
-            jsonNode.put("nationality", p.getNationality().toString());
+            String nat = p.getNationality() == null ? null : p.getNationality().toString();
+            jsonNode.put("nationality", nat);
 
         } catch (Exception e) {
             throw new UnknownException(e);

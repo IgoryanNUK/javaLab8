@@ -1,8 +1,13 @@
 package app.server;
 
+import app.exceptions.UnknownException;
 import app.product.Product;
 import app.server.database.Database;
+import app.server.database.UserNotFound;
 
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,12 +39,55 @@ public class CollectionManager {
     }
 
     public boolean register(String login, String password) throws SQLException {
-        return database.register(login, password);
+        String hp;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            hp = new String(md.digest(password.getBytes("UTF-8")));
+        } catch (Exception e) {
+            throw new UnknownException(e);
+        }
+
+        try {
+            return hp.equals(database.getUserPassword(login));
+        } catch(UserNotFound u) {
+            return database.register(login, hp);
+        }
     }
 
-    public void add(Product ... ps) {
-        //изменения!!!
-        products.addAll(Arrays.asList(ps));
+    public boolean auth(String login, String password) {
+        boolean resp;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            String hp = new String(md.digest(password.getBytes("UTF-8")));
+            if (hp.equals(database.getUserPassword(login))) {
+                resp = true;
+            } else {
+                resp = false;
+            }
+        } catch (UserNotFound u) {
+            resp = false;
+        } catch (Exception e) {
+            throw new UnknownException(e);
+        }
+
+        return resp;
+    }
+
+    public boolean add(String login, String password, Product ... ps) {
+        try {
+            int total = 0;
+            for (Product p : ps) {
+                MessageDigest md = MessageDigest.getInstance("SHA-1");
+                String hp = new String(md.digest(password.getBytes("UTF-8")));
+                int i = database.addProduct(p, login, hp);
+                if (i == 1) {
+                    total += i;
+                    products.add(p);
+                }
+            }
+
+            return total == ps.length;
+        } catch (Exception e) {throw new UnknownException(e);}
     }
 
     /** Возвращает тип коллекции. */
@@ -56,6 +104,10 @@ public class CollectionManager {
      * @return true, если хотя бы один элемент был удалён из коллекции.
      */
     public boolean removeIf(Predicate<Product> p){
+
+
+
+
         boolean b = products.removeIf(p);
         //не забыть про изменения!!!
         return b;

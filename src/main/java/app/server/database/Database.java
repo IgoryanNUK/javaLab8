@@ -22,27 +22,28 @@ public class Database {
     public static void main(String...args) {
         try {
             Database db = new Database("s452689", "mMUd<5774");
-            db.executeUpdate("drop table huy");
+            db.executeUpdate("drop table products");
+            db.createTables();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void createTables() throws SQLException {
-        executeUpdate("create table users (id serial primary key, name text, password text)");
+        //executeUpdate("create table users (id serial primary key, name text, password text)");
         executeUpdate("create table products(id serial primary key," +
                 "name text not null," +
                 "x double precision not null," +
                 "y double precision not null," +
                 "creationDate TIMESTAMPTZ not null," +
                 "price float4 not null check (price > 0)," +
-                "partNumber text null check (length(partNumber) between 23 and 51)," +
-                "manufactureCost double precision unique null check (manufactureCost > 0)," +
+                "partNumber text null check (length(partNumber) between 23 and 51 or partNumber = null)," +
+                "manufactureCost double precision unique null check (manufactureCost >= 0)," +
                 "unitOfMeasure varchar(20) not null check (unitOfMeasure IN ('METERS', 'CENTIMETERS', 'PCS', 'LITERS', 'MILLIGRAMS'))," +
                 "personName text," +
                 "personHeight float4," +
                 "eyeColor varchar(20) not null check (eyeColor IN ('GREEN', 'YELLOW', 'ORANGE', 'BROWN'))," +
-                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN'))," +
+                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN', null))," +
                 "userId serial references users(id))");
     }
 
@@ -72,6 +73,26 @@ public class Database {
         return null;
     }
 
+    public int addProduct(Product p, String login, String password) throws SQLException {
+        int id = getUserId(login, password);
+        Person per = p.getOwner();
+        return executeUpdate("insert into products (name, x, y, creationDate, price, partNumber, manufactureCost," +
+                "unitOfMeasure, personName, personHeight, eyeColor, nationality, userId) values ('" +
+                p.getName() +
+                "', " + p.getCoordinates().getX()+
+                ", " + p.getCoordinates().getY() +
+                ", '" + p.getCreationDate() +
+                "', " + p.getPrice() +
+                ", '" + p.getPartNumber() +
+                "', '" + p.getManufactureCost() +
+                "', '" + p.getUnitOfMeasure() +
+                "', '" + per.getName() +
+                "', " + per.getHeight() +
+                ", '" + per.getEyeColor() +
+                "', '" + per.getNationality() + "'," +
+                id + ")");
+    }
+
     /**
      * Возврашает объект продукта по строке из базы данных.
      *
@@ -80,30 +101,30 @@ public class Database {
      * @throws SQLException
      */
     private Product getProductFromQuery(ResultSet result) throws SQLException {
-        int id = result.getInt(0);
-        String name = result.getString(1);
-        double x = result.getDouble(2);
-        double y = result.getDouble(3);
-        Date date = result.getDate(4);
-        Float price = result.getFloat(5);
-        String partNumber = result.getString(6);
-        Double mC = result.getDouble(7);
+        int id = result.getInt(1);
+        String name = result.getString(2);
+        double x = result.getDouble(3);
+        double y = result.getDouble(4);
+        Date date = result.getDate(5);
+        Float price = result.getFloat(6);
+        String partNumber = result.getString(7);
+        Double mC = result.getDouble(8);
 
-        String uOMString = result.getString(8);
+        String uOMString = result.getString(9);
         UnitOfMeasure uOM = null;
         for (UnitOfMeasure u : UnitOfMeasure.values()) {
             if (u.toString().equals(uOMString)) uOM = u;
         }
 
-        String ownerName = result.getString(9);
-        float ownerHeight = result.getFloat(10);
-        String colorString = result.getString(11);
+        String ownerName = result.getString(10);
+        float ownerHeight = result.getFloat(11);
+        String colorString = result.getString(12);
         Color color = null;
         for (Color u : Color.values()) {
             if (u.toString().equals(colorString)) color = u;
         }
 
-        String natString = result.getString(8);
+        String natString = result.getString(13);
         Country nat = null;
         for (Country u : Country.values()) {
             if (u.toString().equals(natString)) nat = u;
@@ -125,30 +146,37 @@ public class Database {
             statement.setString(1, user);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
-                return resultSet.getString(0);
+                return resultSet.getString(1);
             } else {
                 throw new UserNotFound(user);
             }
         }
     }
 
+    public int getUserId(String user, String password) throws SQLException {
+        int resp;
+        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/studs", this.user, this.password)) {
+            PreparedStatement statement = connection.prepareStatement("select id from users where name = ? and password = ?");
+            statement.setString(1, user);
+            statement.setString(2, password);
+            statement.execute();
+            ResultSet result = statement.getResultSet();
+            if (result.next()) {
+                resp = result.getInt(1);
+            } else {
+                throw new UserNotFound(user);
+            }
+            result.close();
+            statement.close();
+            connection.close();
+            return resp;
+        }
+    }
+
 
     public boolean register(String login, String password) throws SQLException {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            return md.digest(password.getBytes("UTF-8")).equals(getUserPassword(login));
-        } catch(UserNotFound u) {
-            System.out.println("here");
-            int i = executeUpdate("insert into users (name, password) values ('" + login +"', '"+ password + "')");
-            System.out.println("not here");
-            if (i==1) {
-                return true;
-            } else {
-                throw new UnknownException(new Throwable());
-            }
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        int i = executeUpdate("insert into users (name, password) values ('" + login +"', '"+ password + "')");
+        return (i==1);
     }
 
 

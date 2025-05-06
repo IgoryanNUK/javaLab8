@@ -19,7 +19,18 @@ public class Register extends Command {
     @Override
     public Request prepareRequest(String[] args, UserIOManager io) {
         String login = io.ask("Введите логин: ");
-        String pswd = io.ask("Введите пароль: ");
+
+        String pswd;
+        while (true) {
+            pswd = io.ask("Введите пароль: ");
+
+            if (pswd.contains("'") | pswd.contains(";") | pswd.contains("--")) {
+                System.out.println("В пароле обнаружены запрещённые символы (' ; --)");
+            } else {
+                break;
+            }
+        }
+
         if (pswd.equals(io.ask("Подтвердите пароль: "))) {
             app.setLoginAndPassword(login, pswd);
             return new RegistrationReq(login, pswd);
