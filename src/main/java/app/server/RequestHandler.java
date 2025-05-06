@@ -50,10 +50,10 @@ public class RequestHandler {
      */
     public Response removeIf(RemoveReq req) {
         String message;
-        if (collection.removeIf(req.getPredicate())) {
+        if (collection.removeIf(req.getLogin(), req.getPassword(), req.getPredicate())) {
             message = "Продукт(ы) успешно удален(ы).";
         } else {
-            message = "Не нашёл подходящих продуктов(.";
+            message = "Не нашёл подходящих продуктов или отказано в доступе(.";
         }
         return new MessageResp(message);
     }

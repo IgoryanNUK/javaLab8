@@ -103,14 +103,26 @@ public class CollectionManager {
      * @param p условие, по которому удаляются объекты
      * @return true, если хотя бы один элемент был удалён из коллекции.
      */
-    public boolean removeIf(Predicate<Product> p){
+    public boolean removeIf(String login, String password, Predicate<Product> p){
+        try {
+            int total = 0;
 
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            String hp = new String(md.digest(password.getBytes("UTF-8")));
 
+            List<Product> cand = getIf(p);
+            for (Product pr : cand) {
+                int i = database.removeProductByName(pr.getName(), login, hp);
+                if (i==1) {
+                    total += i;
+                    products.removeIf(e -> e.getName().equals(pr.getName()));
+                }
+            }
 
-
-        boolean b = products.removeIf(p);
-        //не забыть про изменения!!!
-        return b;
+            return total == cand.size();
+        } catch (Exception e) {
+            throw new UnknownException(e);
+        }
     }
 
     /**

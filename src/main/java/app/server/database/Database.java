@@ -93,6 +93,11 @@ public class Database {
                 id + ")");
     }
 
+    public int removeProductByName(String name, String login, String password) throws SQLException {
+        int id = getUserId(login, password);
+        return executeUpdate("delete from products where userId =" + id + " and name = '" + name + "'");
+    }
+
     /**
      * Возврашает объект продукта по строке из базы данных.
      *
