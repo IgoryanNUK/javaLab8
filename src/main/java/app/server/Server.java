@@ -31,13 +31,13 @@ public class Server {
     private final BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
     private boolean isRunning = true;
 
-    private int MAX_T = 5;
+    private final int MAX_T = 5;
     private final ExecutorService readPool = Executors.newFixedThreadPool(MAX_T);
     private final ExecutorService executePool = Executors.newFixedThreadPool(MAX_T);
     private final ExecutorService sendPool = Executors.newCachedThreadPool();
 
     private final ConcurrentHashMap<String, Request> requests = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, Response> responses = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Response> responses = new ConcurrentHashMap<>();
 
     {
         try {
@@ -61,6 +61,7 @@ public class Server {
         } catch (Exception e) {
             e.printStackTrace();
             logger.log(Level.SEVERE, "Server start error: ", e);
+            isRunning = false;
         }
     }
 
@@ -71,38 +72,35 @@ public class Server {
         return new String[]{login, password};
     }
 
-
     public static void main(String[] args) {
         Server server = new Server();
         server.run();
     }
 
     private void run() {
-        while (isRunning) {
+        if (isRunning) {
             try {
-                checkClosingRequest();
+                for (int i = 0; i < 5; i++) {
+                    RequestGetter getter = new RequestGetter(connection, collection, executePool, sendPool);
+                    readPool.execute(getter);
+                }
 
-                Socket sock = connection.getConnection();
-                if (sock.isBound()) {
-                    try {
-                        String id = Math.random()+"";
-                        RequestGetter getter = new RequestGetter(sock, requests, id);
-                        readPool.execute(getter);
-
-                        RequestHandler handler = new RequestHandler(collection, requests, responses, id);
-                        executePool.execute(handler);
-
-                        ResponseSender sender = new ResponseSender(responses, sock, id);
-                        sendPool.execute(sender);
-                    } catch (Exception e) {
-                        Communicator.send(new MessageResp("Произошла ошибка на сервере((((("),sock);
-                        logger.log(Level.SEVERE, "Ошибка в работе сервера: ", e);
+                while (isRunning) {
+                    System.out.println('1');
+                    String req = console.readLine();
+                    if (req.equals("x")) {
+                        isRunning = false;
+                        readPool.shutdownNow();
+                        executePool.shutdownNow();
+                        sendPool.shutdownNow();
                     }
                 }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Ошибка в работе сервера: ", e);
             }
         }
+
+
     }
 
     private void checkClosingRequest() throws Exception{

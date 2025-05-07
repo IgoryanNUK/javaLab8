@@ -11,39 +11,34 @@ import app.product.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.net.Socket;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RequestHandler extends Thread {
+    private Request request;
     private CollectionManager collection;
-    private ConcurrentHashMap<String, Request> requests;
-    private String id;
-    private ConcurrentHashMap<String, Response> responses;
+    private ExecutorService sendPool;
+    private Socket sock;
 
-    public RequestHandler(CollectionManager collection, ConcurrentHashMap<String, Request> requests,  ConcurrentHashMap<String, Response> responses, String id) {
+    public RequestHandler(Request request, CollectionManager collection, ExecutorService sendPool, Socket sock) {
         this.collection = collection;
-        this.requests = requests;
-        this.id = id;
-        this.responses = responses;
+        this.request = request;
+        this.sock = sock;
+        this.sendPool = sendPool;
     }
 
 
     @Override
     public void run() {
         try {
-            Request req;
-            synchronized (requests) {
-                while (requests.isEmpty()) requests.wait();
-                req = requests.remove(id);
-                requests.notifyAll();
-            }
+            Response resp = handleRequest(request);
 
-            Response resp = handleRequest(req);
-            synchronized (responses) {
-                responses.put(id, resp);
-                responses.notifyAll();
-            }
+            Runnable sender = new ResponseSender(resp, sock);
+            sendPool.execute(sender);
         } catch (Exception e) {
             throw new UnknownException(e);
         }

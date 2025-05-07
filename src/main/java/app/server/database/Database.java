@@ -13,6 +13,7 @@ import java.util.List;
 public class Database {
     private String user;
     private String password;
+    private final String connectionAddress = "jdbc:postgresql://localhost:5432/studs";
 
     public Database(String user, String password) {
         this.user = user;
@@ -38,7 +39,7 @@ public class Database {
                 "creationDate TIMESTAMPTZ not null," +
                 "price float4 not null check (price > 0)," +
                 "partNumber text null check (length(partNumber) between 23 and 51 or partNumber = null)," +
-                "manufactureCost double precision unique null check (manufactureCost >= 0)," +
+                "manufactureCost double precision null check (manufactureCost >= 0)," +
                 "unitOfMeasure varchar(20) not null check (unitOfMeasure IN ('METERS', 'CENTIMETERS', 'PCS', 'LITERS', 'MILLIGRAMS'))," +
                 "personName text," +
                 "personHeight float4," +
@@ -54,7 +55,7 @@ public class Database {
      * @return список продуктов)))
      */
     public List<Product> executeSelect(String query) throws SQLException {
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", user, password)) {
+        try(Connection connection = DriverManager.getConnection(connectionAddress, user, password)) {
             Statement statement = connection.createStatement();
             if (statement.execute(query)) {
                 ResultSet result = statement.getResultSet();
@@ -73,10 +74,19 @@ public class Database {
         return null;
     }
 
+    /**
+     * Добавляет продукт в базу данных. Возвращает id продукта, сгенерированный в базе.
+     *
+     * @param p продукт
+     * @param login логин пользователя, добавляющего продукт
+     * @param password пароль пользователя
+     * @return id продукта
+     * @throws SQLException
+     */
     public int addProduct(Product p, String login, String password) throws SQLException {
-        int id = getUserId(login, password);
+        int userId = getUserId(login, password);
         Person per = p.getOwner();
-        return executeUpdate("insert into products (name, x, y, creationDate, price, partNumber, manufactureCost," +
+        String query = "insert into products (name, x, y, creationDate, price, partNumber, manufactureCost," +
                 "unitOfMeasure, personName, personHeight, eyeColor, nationality, userId) values ('" +
                 p.getName() +
                 "', " + p.getCoordinates().getX()+
@@ -90,12 +100,27 @@ public class Database {
                 "', " + per.getHeight() +
                 ", '" + per.getEyeColor() +
                 "', '" + per.getNationality() + "'," +
-                id + ")");
+                userId + ")" +
+                "returning id";
+
+        try(Connection connection = DriverManager.getConnection(connectionAddress, user, this.password)) {
+            Statement statement = connection.createStatement();
+            statement.execute(query);
+            ResultSet result = statement.getResultSet();
+            result.next();
+
+            int id = result.getInt(1);
+            result.close();
+            statement.close();
+            connection.close();
+            return id;
+        }
+
     }
 
-    public int removeProductByName(String name, String login, String password) throws SQLException {
-        int id = getUserId(login, password);
-        return executeUpdate("delete from products where userId =" + id + " and name = '" + name + "'");
+    public int removeProductById(int id, String login, String password) throws SQLException {
+        int userId = getUserId(login, password);
+        return executeUpdate("delete from products where userId =" + userId + " and id = '" + id + "'");
     }
 
     /**
@@ -146,7 +171,7 @@ public class Database {
      * @throws SQLException
      */
     public String getUserPassword(String user) throws SQLException{
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", this.user, password)) {
+        try(Connection connection = DriverManager.getConnection(connectionAddress, this.user, password)) {
             PreparedStatement statement = connection.prepareStatement("select password from users where name = ?");
             statement.setString(1, user);
             ResultSet resultSet = statement.executeQuery();
@@ -160,7 +185,7 @@ public class Database {
 
     public int getUserId(String user, String password) throws SQLException {
         int resp;
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", this.user, this.password)) {
+        try(Connection connection = DriverManager.getConnection(connectionAddress, this.user, this.password)) {
             PreparedStatement statement = connection.prepareStatement("select id from users where name = ? and password = ?");
             statement.setString(1, user);
             statement.setString(2, password);
@@ -192,7 +217,7 @@ public class Database {
      * @return количество изменённых строк
      */
     public int executeUpdate(String query) throws SQLException {
-        try(Connection connection = DriverManager.getConnection("jdbc:postgresql://pg:5432/studs", user, password)) {
+        try(Connection connection = DriverManager.getConnection(connectionAddress, user, password)) {
             Statement statement = connection.createStatement();
             statement.execute(query);
             int count = statement.getUpdateCount();

@@ -8,34 +8,34 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 public class RequestGetter implements Runnable {
-    private Socket sock;
-    private ConcurrentHashMap<String, Request> requests;
-    private String id;
+    private final ConnetionGetter connection;
+    private final CollectionManager collection;
+    private final ExecutorService executePool;
+    private final ExecutorService sendPool;
 
-    public RequestGetter(Socket s, ConcurrentHashMap<String, Request> requests, String id) {
-        sock = s;
-        this.requests = requests;
-        this.id = id;
+    public RequestGetter(ConnetionGetter connection, CollectionManager collection, ExecutorService executePool, ExecutorService sendPool) {
+        this.collection = collection;
+        this.connection = connection;
+        this.sendPool = sendPool;
+        this.executePool =executePool;
     }
 
     @Override
     public void run() {
-        try {
-            Request req;
-            synchronized (sock) {
-                req = read(sock);
+        while(true) {
+            try {
+                Socket sock = connection.getConnection();
+                Request req = read(sock);
+                RequestHandler handler = new RequestHandler(req, collection, sendPool, sock);
+                executePool.execute(handler);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-            synchronized (requests) {
-                requests.put(id, req);
-                requests.notifyAll();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
-
 
 
     /**
@@ -50,33 +50,5 @@ public class RequestGetter implements Runnable {
         ObjectInputStream ois = new ObjectInputStream(is);
         Request r = (Request) ois.readObject();
         return r;
-    }
-
-
-
-    /**
-     * Отправляет текстовый ответ клиенту.
-     *
-     * @param message текстовое сообщение
-     * @param sock сокет соединения с клиентом
-     * @throws Exception непредвиденная ошибка
-     */
-    public static void sendString(String message, Socket sock) throws Exception {
-        OutputStream os = sock.getOutputStream();
-        os.write(message.getBytes(StandardCharsets.UTF_8));
-        os.flush();
-        os.close();
-    }
-
-    private static byte[] getSerSize(Object o) {
-        ByteArrayOutputStream bA = new ByteArrayOutputStream();
-        try(ObjectOutputStream oS = new ObjectOutputStream(bA)) {
-            oS.writeObject(o);
-        } catch (Exception e) {}
-
-        int length = bA.toByteArray().length;
-        System.out.println(length);
-
-        return ByteBuffer.allocate(4).putInt(length).array();
     }
 }

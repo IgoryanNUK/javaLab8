@@ -75,18 +75,16 @@ public class CollectionManager {
 
     public boolean add(String login, String password, Product ... ps) {
         try {
-            int total = 0;
             for (Product p : ps) {
                 MessageDigest md = MessageDigest.getInstance("SHA-1");
                 String hp = new String(md.digest(password.getBytes("UTF-8")));
-                int i = database.addProduct(p, login, hp);
-                if (i == 1) {
-                    total += i;
-                    products.add(p);
-                }
+                int id = database.addProduct(p, login, hp);
+                p.setId(id);
+                products.add(p);
+
             }
 
-            return total == ps.length;
+            return true;
         } catch (Exception e) {throw new UnknownException(e);}
     }
 
@@ -112,7 +110,7 @@ public class CollectionManager {
 
             List<Product> cand = getIf(p);
             for (Product pr : cand) {
-                int i = database.removeProductByName(pr.getName(), login, hp);
+                int i = database.removeProductById(pr.getId(), login, hp);
                 if (i==1) {
                     total += i;
                     products.removeIf(e -> e.getName().equals(pr.getName()));

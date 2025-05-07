@@ -7,31 +7,21 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 public class ResponseSender extends Thread {
-    private ConcurrentHashMap<String, Response> responses;
-    private Socket sock;
-    private String id;
+    private final Response response;
+    private final Socket sock;
 
-    public ResponseSender(ConcurrentHashMap<String, Response> responses, Socket sock, String id) {
-        this.id = id;
-        this.responses = responses;
+    public ResponseSender(Response resp, Socket sock) {
+        this.response = resp;
         this.sock = sock;
     }
 
     @Override
     public void run() {
         try {
-            Response resp;
-            synchronized (responses) {
-                while (responses.isEmpty()) responses.wait();
-                resp = responses.remove(id);
-                responses.notifyAll();
-            }
-
-            synchronized (sock) {
-                send(resp, sock);
-            }
+            send(response, sock);
         } catch (Exception e) {
             throw new UnknownException(e);
         }

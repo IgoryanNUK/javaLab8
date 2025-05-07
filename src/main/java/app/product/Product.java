@@ -9,7 +9,7 @@ import java.util.HashSet;
  */
 public class Product implements Comparable<Product>, Printable, Serializable {
     private static int nextId = 1;//общий счётчик id для всех продуктов
-    private final int id; //Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
+    private int id; //Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
     private String name; //Поле не может быть null, Строка не может быть пустой
     private Coordinates coordinates; //Поле не может быть null
     private final Date creationDate; //Поле не может быть null, Значение этого поля должно генерироваться автоматически
@@ -75,6 +75,8 @@ public class Product implements Comparable<Product>, Printable, Serializable {
     public UnitOfMeasure getUnitOfMeasure() {return unitOfMeasure;}
 
     public Person getOwner() {return owner;}
+
+    public void setId(int id) {this.id = id;}
 
     public void setName(String name) {
         if (name == null || name.equals("")){
