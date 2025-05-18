@@ -118,6 +118,15 @@ public class Database {
 
     }
 
+    /**
+     * Удаляет продукт из базы данных. Проверяет, имеет ли пользователь доступ к этому продукту (сверяет id создателя).
+     *
+     * @param id id продукта
+     * @param login логин пользователя
+     * @param password пароль пользователя
+     * @return количество удаленных объектов
+     * @throws SQLException
+     */
     public int removeProductById(int id, String login, String password) throws SQLException {
         int userId = getUserId(login, password);
         return executeUpdate("delete from products where userId =" + userId + " and id = '" + id + "'");
@@ -164,7 +173,7 @@ public class Database {
     }
 
     /**
-     *
+     * Получает пароль пользователя по заданному логину.
      *
      * @param user
      * @return
@@ -183,6 +192,14 @@ public class Database {
         }
     }
 
+    /**
+     * Находит id пользователя. Проверяет, что пароль пользователя совпадает с паролем в базе.
+     *
+     * @param user логин
+     * @param password пароль
+     * @return id пользователя
+     * @throws SQLException
+     */
     public int getUserId(String user, String password) throws SQLException {
         int resp;
         try(Connection connection = DriverManager.getConnection(connectionAddress, this.user, this.password)) {
@@ -203,7 +220,14 @@ public class Database {
         }
     }
 
-
+    /**
+     * Регистрирует пользователя. Заносит логин и пароль пользователя без дополнительных проверок.
+     *
+     * @param login логин
+     * @param password пароль
+     * @return прошло ли изменение успешно
+     * @throws SQLException
+     */
     public boolean register(String login, String password) throws SQLException {
         int i = executeUpdate("insert into users (name, password) values ('" + login +"', '"+ password + "')");
         return (i==1);

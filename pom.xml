@@ -78,6 +78,11 @@
           <show>public</show>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>11.3.2</version>
+      </plugin>
     </plugins>
   </build>
 
