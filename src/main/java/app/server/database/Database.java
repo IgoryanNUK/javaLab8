@@ -2,6 +2,9 @@ package app.server.database;
 
 import app.exceptions.UnknownException;
 import app.product.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -10,19 +13,24 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@PropertySource("classpath:flyway.properties")
 public class Database {
-    private String user;
-    private String password;
-    private final String connectionAddress = "jdbc:postgresql://localhost:5432/studs";
+    private final String user;
+    private final String password;
+    private final String connectionAddress;
 
-    public Database(String user, String password) {
+
+    public Database(@Value("${flyway.user}") String user, @Value("${flyway.password}") String password,
+                    @Value("${flyway.url}") String url) {
         this.user = user;
         this.password = password;
+        this.connectionAddress = url;
     }
 
     public static void main(String...args) {
         try {
-            Database db = new Database("s452689", "mMUd<5774");
+            Database db = new Database("s452689", "mMUd<5774", "jdbc:postgresql://localhost:5432/studs");
             db.executeUpdate("drop table products");
             db.createTables();
         } catch (Exception e) {

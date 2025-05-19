@@ -41,6 +41,18 @@
       <artifactId>postgresql</artifactId>
       <version>42.7.5</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <version>10.11.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>6.2.1</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -78,6 +90,7 @@
           <show>public</show>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-maven-plugin</artifactId>

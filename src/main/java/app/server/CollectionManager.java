@@ -4,6 +4,9 @@ import app.exceptions.UnknownException;
 import app.product.Product;
 import app.server.database.Database;
 import app.server.database.UserNotFound;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -15,16 +18,23 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 
+@Component
 public class CollectionManager {
-    private CopyOnWriteArraySet<Product> products;
+    private final CopyOnWriteArraySet<Product> products;
     private final Database database;
 
-    public CollectionManager(String dbUser, String dbPassword) throws SQLException {
-        database = new Database(dbUser, dbPassword);
-
+    @Autowired
+    public CollectionManager(Database database) throws SQLException {
+        this.database = database;
         products = new CopyOnWriteArraySet<>(load());
     }
 
+    /**
+     * Возвращает список прочитанных из бд продуктов.
+     *
+     * @return список продуктов
+     * @throws SQLException
+     */
     private List<Product> load() throws SQLException {
         try {
             return database.executeSelect("select * from products");
