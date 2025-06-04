@@ -1,0 +1,24 @@
+мая 30, 2025 7:14:38 PM app.server.Server <init>
+INFO: Start success
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: 1 SQL migrations were detected but not run because they did not follow the filename convention.
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Set 'validateMigrationNaming' to true to fail fast and see a list of the invalid file names.
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Database: jdbc:postgresql://localhost:5432/studs (PostgreSQL 17.2)
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: 1 SQL migrations were detected but not run because they did not follow the filename convention.
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Set 'validateMigrationNaming' to true to fail fast and see a list of the invalid file names.
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Successfully validated 2 migrations (execution time 00:00.007s)
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Current version of schema "public": << Empty Schema >>
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Migrating schema "public" to version "1 - Create monkeys table"
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Migrating schema "public" to version "2 - Create users table"
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog warn
+WARNING: DB: отношение "users" уже существует, пропускается (SQL State: 42P07 - Error Code: 0)
+мая 30, 2025 7:14:39 PM org.flywaydb.core.internal.logging.apachecommons.ApacheCommonsLog info
+INFO: Successfully applied 2 migrations to schema "public", now at version v2 (execution time 00:00.021s)
