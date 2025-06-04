@@ -5,15 +5,11 @@ import app.product.Product;
 import app.server.database.Database;
 import app.server.database.UserNotFound;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
@@ -38,7 +34,7 @@ public class CollectionManager {
     private List<Product> load() throws SQLException {
         try {
             return database.executeSelect("select * from products");
-        } catch(SQLException s) {
+        } catch (SQLException s) {
             if (s.getMessage().startsWith("ОШИБКА: отношение \"products\" не существует") | s.getMessage().startsWith("ERROR: relation \"products\" does not exist")) {
                 database.createTables();
                 return new ArrayList<>();
@@ -59,7 +55,7 @@ public class CollectionManager {
 
         try {
             return hp.equals(database.getUserPassword(login));
-        } catch(UserNotFound u) {
+        } catch (UserNotFound u) {
             return database.register(login, hp);
         }
     }
@@ -83,7 +79,7 @@ public class CollectionManager {
         return resp;
     }
 
-    public boolean add(String login, String password, Product ... ps) {
+    public boolean add(String login, String password, Product... ps) {
         try {
             for (Product p : ps) {
                 MessageDigest md = MessageDigest.getInstance("SHA-1");
@@ -95,15 +91,21 @@ public class CollectionManager {
             }
 
             return true;
-        } catch (Exception e) {throw new UnknownException(e);}
+        } catch (Exception e) {
+            throw new UnknownException(e);
+        }
     }
 
-    /** Возвращает тип коллекции. */
+    /**
+     * Возвращает тип коллекции.
+     */
     public String getCollectionName() {
         return products.getClass().getName();
     }
 
-    public int getSize() {return products.size();}
+    public int getSize() {
+        return products.size();
+    }
 
     /**
      * Удаляет все элементы, удовлетворяющие заданному условию.
@@ -111,7 +113,7 @@ public class CollectionManager {
      * @param p условие, по которому удаляются объекты
      * @return true, если хотя бы один элемент был удалён из коллекции.
      */
-    public boolean removeIf(String login, String password, Predicate<Product> p){
+    public boolean removeIf(String login, String password, Predicate<Product> p) {
         try {
             int total = 0;
 
@@ -121,7 +123,7 @@ public class CollectionManager {
             List<Product> cand = getIf(p);
             for (Product pr : cand) {
                 int i = database.removeProductById(pr.getId(), login, hp);
-                if (i==1) {
+                if (i == 1) {
                     total += i;
                     products.removeIf(e -> e.getName().equals(pr.getName()));
                 }

@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 @Configuration
 @ComponentScan("app.server")
 @PropertySource("classpath:flyway.properties")
+@PropertySource("classpath:application.properties")
 public class ApplicationConfiguration {
     @Bean
     public DataSource dataSource(@Value("${flyway.url}") String url, @Value("${flyway.user}") String user, @Value("${flyway.password}") String password) {

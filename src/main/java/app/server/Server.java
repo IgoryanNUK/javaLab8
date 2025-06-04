@@ -71,8 +71,6 @@ public class Server {
         ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationConfiguration.class,
                 FlywayConfig.class);
 
-        Flyway f = context.getBean(Flyway.class);
-        System.out.println(f.info());
         Server server = context.getBean(Server.class);
         server.run();
     }
@@ -102,8 +100,6 @@ public class Server {
                 logger.log(Level.SEVERE, "Ошибка в работе сервера: ", e);
             }
         }
-
-
     }
 
     private void checkClosingRequest() throws Exception{
