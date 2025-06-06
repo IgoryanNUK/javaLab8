@@ -1,14 +1,6 @@
 package app.server;
 
 
-import app.server.config.ApplicationConfiguration;
-import app.server.config.FlywayConfig;
-import org.flywaydb.core.Flyway;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.InputStreamReader;
@@ -19,13 +11,11 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-@Component
 public class Server {
     private final int port = 4027;
     private ServerSocket server;
     private ConnetionGetter connection;
 
-    @Autowired
     private CollectionManager collection;
     private Logger logger;
     private final BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
@@ -45,9 +35,11 @@ public class Server {
         }
     }
 
-    public Server() {
+    public Server(CollectionManager collection) {
         try {
             server = new ServerSocket(port);
+
+            this.collection = collection;
 
             System.out.println("*authorisation succeed*");
 
@@ -68,11 +60,6 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        ApplicationContext context = new AnnotationConfigApplicationContext(ApplicationConfiguration.class,
-                FlywayConfig.class);
-
-        Server server = context.getBean(Server.class);
-        server.run();
     }
 
     /**

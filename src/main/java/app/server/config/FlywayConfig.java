@@ -25,10 +25,9 @@ public class FlywayConfig {
                 .cleanDisabled(false)
                 .load();
 
-        System.out.println(flyway.getConfiguration().getLocations()[0]);
         System.out.println("Flyway migrations to apply: " + Arrays.toString(flyway.info().pending()));
 
-        System.out.println(flyway.migrate().migrationsExecuted);
+        System.out.println("Migrations executed: " + flyway.migrate().migrationsExecuted);
         return flyway;
     }
 }
