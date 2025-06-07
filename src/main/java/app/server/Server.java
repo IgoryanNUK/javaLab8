@@ -1,8 +1,10 @@
 package app.server;
 
+import app.server.database.Database;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
-import java.io.Console;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
@@ -11,12 +13,13 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+@Service
 public class Server {
     private final int port = 4027;
     private ServerSocket server;
     private ConnetionGetter connection;
 
-    private CollectionManager collection;
+    private Database database;
     private Logger logger;
     private final BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
     private boolean isRunning = true;
@@ -35,11 +38,18 @@ public class Server {
         }
     }
 
-    public Server(CollectionManager collection) {
+    @Autowired
+    public Server(Database database) {
         try {
             server = new ServerSocket(port);
 
-            this.collection = collection;
+            this.database = database;
+
+
+            for (int i = 0; i < 5; i++) {
+                RequestGetter getter = new RequestGetter(connection, database, executePool, sendPool);
+                readPool.execute(getter);
+            }
 
             System.out.println("*authorisation succeed*");
 
@@ -52,44 +62,6 @@ public class Server {
         }
     }
 
-    private String[] authorisation() {
-        Console console = System.console();
-        String login = console.readLine("Login: ");
-        String password = new String(console.readPassword("Password: "));
-        return new String[]{login, password};
-    }
-
     public static void main(String[] args) {
-    }
-
-    /**
-     * Запуск приложения
-     */
-    public void run() {
-        if (isRunning) {
-            try {
-                for (int i = 0; i < 5; i++) {
-                    RequestGetter getter = new RequestGetter(connection, collection, executePool, sendPool);
-                    readPool.execute(getter);
-                }
-
-                while (isRunning) {
-                    String req = console.readLine();
-                    System.out.println(req);
-                    if (req.equals("x")) {
-                        isRunning = false;
-                        readPool.shutdownNow();
-                        executePool.shutdownNow();
-                        sendPool.shutdownNow();
-                    }
-                }
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Ошибка в работе сервера: ", e);
-            }
-        }
-    }
-
-    private void checkClosingRequest() throws Exception{
-        if (console.ready()) isRunning = false;
     }
 }

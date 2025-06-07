@@ -2,6 +2,7 @@ package app.server;
 
 import app.messages.requests.Request;
 import app.messages.response.Response;
+import app.server.database.Database;
 
 import java.io.*;
 import java.net.Socket;
@@ -12,12 +13,12 @@ import java.util.concurrent.ExecutorService;
 
 public class RequestGetter implements Runnable {
     private final ConnetionGetter connection;
-    private final CollectionManager collection;
+    private final Database database;
     private final ExecutorService executePool;
     private final ExecutorService sendPool;
 
-    public RequestGetter(ConnetionGetter connection, CollectionManager collection, ExecutorService executePool, ExecutorService sendPool) {
-        this.collection = collection;
+    public RequestGetter(ConnetionGetter connection, Database database, ExecutorService executePool, ExecutorService sendPool) {
+        this.database = database;
         this.connection = connection;
         this.sendPool = sendPool;
         this.executePool =executePool;
@@ -29,7 +30,7 @@ public class RequestGetter implements Runnable {
             try {
                 Socket sock = connection.getConnection();
                 Request req = read(sock);
-                RequestHandler handler = new RequestHandler(req, collection, sendPool, sock);
+                RequestHandler handler = new RequestHandler(req, database, sendPool, sock);
                 executePool.execute(handler);
             } catch (Exception e) {
                 throw new RuntimeException(e);

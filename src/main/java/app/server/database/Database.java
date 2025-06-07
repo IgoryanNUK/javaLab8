@@ -1,38 +1,36 @@
 package app.server.database;
 
+import app.exceptions.UnknownException;
 import app.product.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
+import org.apache.catalina.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
-@Component
-@PropertySource("classpath:flyway.properties")
+@Service
 public class Database {
-    private final String user;
-    private final String password;
-    private final String connectionAddress;
+    private final CrudRepository<Product, Integer> productDao;
+    private final UserDAO userDao;
 
-
-    public Database(@Value("${flyway.user}") String user, @Value("${flyway.password}") String password,
-                    @Value("${flyway.url}") String url) {
-        this.user = user;
-        this.password = password;
-        this.connectionAddress = url;
+    public Database(@Autowired CrudRepository<Product, Integer> pDAO,
+                    @Autowired UserDAO uDAO) {
+        this.userDao = uDAO;
+        this.productDao = pDAO;
     }
 
     public static void main(String...args) {
-        try {
-            Database db = new Database("s452689", "mMUd<5774", "jdbc:postgresql://localhost:5432/studs");
-            db.executeUpdate("drop table products");
-            db.createTables();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
+
 
     public void createTables() throws SQLException {
         executeUpdate("create table users (id serial primary key, name text, password text)");
@@ -42,7 +40,7 @@ public class Database {
                 "y double precision not null," +
                 "creationDate TIMESTAMPTZ not null," +
                 "price float4 not null check (price > 0)," +
-                "partNumber text null check (length(partNumber) between 23 and 51 or partNumber = null)," +
+                "partNumber text null unique check(length(partNumber) between 23 and 51 or partNumber = null)," +
                 "manufactureCost double precision null check (manufactureCost >= 0)," +
                 "unitOfMeasure varchar(20) not null check (unitOfMeasure IN ('METERS', 'CENTIMETERS', 'PCS', 'LITERS', 'MILLIGRAMS'))," +
                 "personName text," +
@@ -53,29 +51,10 @@ public class Database {
     }
 
     /**
-     * Выполняет запросы на получение продуктов из коллекции.
-     *
-     * @param query запрос получения продуктов
-     * @return список продуктов)))
+     * @return крличество продуктов в базе данных.
      */
-    public List<Product> executeSelect(String query) throws SQLException {
-        try(Connection connection = DriverManager.getConnection(connectionAddress, user, password)) {
-            Statement statement = connection.createStatement();
-            if (statement.execute(query)) {
-                ResultSet result = statement.getResultSet();
-                List<Product> products = new ArrayList<>();
-                while (result.next()) {
-                    products.add(getProductFromQuery(result));
-                }
-                result.close();
-                statement.close();
-                connection.close();
-                return products;
-            } else {
-                System.out.println("Wrong query type (use executeUpdate instead)");
-            }
-        }
-        return null;
+    public long getProductsCount() {
+        return productDao.count();
     }
 
     /**
@@ -87,113 +66,97 @@ public class Database {
      * @return id продукта
      * @throws SQLException
      */
-    public int addProduct(Product p, String login, String password) throws SQLException {
-        int userId = getUserId(login, password);
-        Person per = p.getOwner();
-        String query = "insert into products (name, x, y, creationDate, price, partNumber, manufactureCost," +
-                "unitOfMeasure, personName, personHeight, eyeColor, nationality, userId) values ('" +
-                p.getName() +
-                "', " + p.getCoordinates().getX()+
-                ", " + p.getCoordinates().getY() +
-                ", '" + p.getCreationDate() +
-                "', " + p.getPrice() +
-                ", '" + p.getPartNumber() +
-                "', '" + p.getManufactureCost() +
-                "', '" + p.getUnitOfMeasure() +
-                "', '" + per.getName() +
-                "', " + per.getHeight() +
-                ", '" + per.getEyeColor() +
-                "', '" + per.getNationality() + "'," +
-                userId + ")" +
-                "returning id";
+    @Transactional
+    public boolean addProduct(Product p, String login, String password) {
+        boolean ans;
 
-        try(Connection connection = DriverManager.getConnection(connectionAddress, user, this.password)) {
-            Statement statement = connection.createStatement();
-            statement.execute(query);
-            ResultSet result = statement.getResultSet();
-            result.next();
-
-            int id = result.getInt(1);
-            result.close();
-            statement.close();
-            connection.close();
-            return id;
+        try {
+            int userId = getUserId(login, password);
+            p.setUserId(userId);
+            productDao.save(p);
+            ans = true;
+        } catch (UserNotFound u) {
+            ans = false;
         }
 
+        return ans;
     }
 
-    /**
-     * Удаляет продукт из базы данных. Проверяет, имеет ли пользователь доступ к этому продукту (сверяет id создателя).
-     *
-     * @param id id продукта
-     * @param login логин пользователя
-     * @param password пароль пользователя
-     * @return количество удаленных объектов
-     * @throws SQLException
-     */
-    public int removeProductById(int id, String login, String password) throws SQLException {
-        int userId = getUserId(login, password);
-        return executeUpdate("delete from products where userId =" + userId + " and id = '" + id + "'");
-    }
+    @Transactional
+    public List<Product> getIf(Predicate<Product> pred) {
+        Iterable<Product> collection = productDao.findAll();
+        Iterator<Product> it = collection.iterator();
+        ArrayList<Product> ans = new ArrayList<>();
 
-    /**
-     * Возврашает объект продукта по строке из базы данных.
-     *
-     * @param result строка базы данных
-     * @return продукт
-     * @throws SQLException
-     */
-    private Product getProductFromQuery(ResultSet result) throws SQLException {
-        int id = result.getInt(1);
-        String name = result.getString(2);
-        double x = result.getDouble(3);
-        double y = result.getDouble(4);
-        Date date = result.getDate(5);
-        Float price = result.getFloat(6);
-        String partNumber = result.getString(7);
-        Double mC = result.getDouble(8);
-
-        String uOMString = result.getString(9);
-        UnitOfMeasure uOM = null;
-        for (UnitOfMeasure u : UnitOfMeasure.values()) {
-            if (u.toString().equals(uOMString)) uOM = u;
-        }
-
-        String ownerName = result.getString(10);
-        float ownerHeight = result.getFloat(11);
-        String colorString = result.getString(12);
-        Color color = null;
-        for (Color u : Color.values()) {
-            if (u.toString().equals(colorString)) color = u;
-        }
-
-        String natString = result.getString(13);
-        Country nat = null;
-        for (Country u : Country.values()) {
-            if (u.toString().equals(natString)) nat = u;
-        }
-
-        return new Product(id, name, new Coordinates(x, y), price, partNumber, mC, uOM, new Person(ownerName, ownerHeight, color, nat));
-    }
-
-    /**
-     * Получает пароль пользователя по заданному логину.
-     *
-     * @param user
-     * @return
-     * @throws SQLException
-     */
-    public String getUserPassword(String user) throws SQLException{
-        try(Connection connection = DriverManager.getConnection(connectionAddress, this.user, password)) {
-            PreparedStatement statement = connection.prepareStatement("select password from users where name = ?");
-            statement.setString(1, user);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getString(1);
-            } else {
-                throw new UserNotFound(user);
+        while (it.hasNext()) {
+            Product p = it.next();
+            if (pred.test(p)) {
+                ans.add(p);
             }
         }
+
+        return ans;
+    }
+
+    /**
+     * Удаляет продукт из базы по предикату.
+     * Может удалить только те продукты, которые принадлежат пользователю с login и password.
+     *
+     * @param pred предикат
+     * @param login логин пользователя
+     * @param password пароль пользователя
+     * @return true, если удален хотя бы 1 элемент
+     */
+    @Transactional
+    public boolean removeIf(Predicate<Product> pred, String login, String password) {
+        int userId = getUserId(login, password);
+        Iterable<Product> collection = productDao.findAll();
+        Iterator<Product> it = collection.iterator();
+
+        boolean ans = false;
+        while (it.hasNext()) {
+            Product p = it.next();
+            if (pred.test(p)) {
+                if (p.getUserId() == userId) {
+                    productDao.delete(p);
+                    ans = true;
+                }
+            }
+        }
+
+        return ans;
+    }
+
+
+    /**
+     * Обновляет продукт.
+     * Возвращает 1, если продукт успешно обновился, 0 - не нашёл продукта с указанным id, -1 - найденный продукт принадлежит другому пользователю.
+     *
+     * @param p продукт
+     * @param login логин
+     * @param password пароль
+     * @return статус операции
+     */
+    @Transactional
+    public int updateProduct(Product p, String login, String password) {
+        int userId = getUserId(login, password);
+        p.setUserId(userId);
+        int ans;
+
+        Optional<Product> opt = productDao.findById(p.getId());
+        if (opt.isPresent()) {
+            Product original = opt.get();
+            if (original.getUserId() == userId) {
+                productDao.save(p);
+                ans = 1;
+            } else {
+                ans = -1; //отказано в доступе
+            }
+        } else {
+            ans = 0; //не нашёл элемента по id
+        }
+
+        return ans;
     }
 
     /**
@@ -204,24 +167,18 @@ public class Database {
      * @return id пользователя
      * @throws SQLException
      */
-    public int getUserId(String user, String password) throws SQLException {
+    @Transactional
+    public int getUserId(String user, String password) {
         int resp;
-        try(Connection connection = DriverManager.getConnection(connectionAddress, this.user, this.password)) {
-            PreparedStatement statement = connection.prepareStatement("select id from users where name = ? and password = ?");
-            statement.setString(1, user);
-            statement.setString(2, password);
-            statement.execute();
-            ResultSet result = statement.getResultSet();
-            if (result.next()) {
-                resp = result.getInt(1);
-            } else {
-                throw new UserNotFound(user);
-            }
-            result.close();
-            statement.close();
-            connection.close();
-            return resp;
+
+        List<UserEntity> list = userDao.findByNameAndPassword(user, password);
+        if (list.isEmpty()) {
+            throw new UserNotFound(user);
+        } else {
+            resp = list.get(0).getId();
         }
+
+        return resp;
     }
 
     /**
@@ -232,9 +189,33 @@ public class Database {
      * @return прошло ли изменение успешно
      * @throws SQLException
      */
+    @Transactional
     public boolean register(String login, String password) throws SQLException {
-        int i = executeUpdate("insert into users (name, password) values ('" + login +"', '"+ password + "')");
-        return (i==1);
+        Optional<UserEntity> opt = userDao.findByName(login);
+        boolean res;
+        if (opt.isEmpty()) {
+            userDao.save(new UserEntity(login, password));
+            res = true;
+        } else {
+            res = false;
+        }
+
+        return res;
+    }
+
+
+    public boolean auth(String login, String password) {
+        boolean resp;
+
+        Optional<UserEntity> opt = userDao.findByName(login);
+        if (opt.isEmpty()) {
+            resp = false;
+        } else {
+            UserEntity user = opt.get();
+            resp = user.getPassword().equals(password);
+        }
+
+        return resp;
     }
 
 

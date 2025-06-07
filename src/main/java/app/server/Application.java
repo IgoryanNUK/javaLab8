@@ -1,6 +1,5 @@
 package app.server;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
@@ -30,12 +29,5 @@ public class Application {
         dataSource.setPassword(password);
 
         return dataSource;
-    }
-
-    @Bean
-    public Server server(@Autowired CollectionManager cM) {
-        Server server = new Server(cM);
-        server.run();
-        return server;
     }
 }

@@ -1,5 +1,13 @@
 package app.product;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
@@ -7,44 +15,41 @@ import java.util.HashSet;
 /**
  * Класс, описывающий продукт.
  */
+@Entity
+@Table(name = "products")
+@Data
+@DynamicUpdate
+@DynamicInsert
 public class Product implements Comparable<Product>, Printable, Serializable {
-    private static int nextId = 1;//общий счётчик id для всех продуктов
-    private int id; //Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
-    private String name; //Поле не может быть null, Строка не может быть пустой
-    private Coordinates coordinates; //Поле не может быть null
+    @Id
+    @GeneratedValue
+    private int id;
+    private String name;
+    private double x;
+    private double y;
     private final Date creationDate; //Поле не может быть null, Значение этого поля должно генерироваться автоматически
-    private Float price; //Поле не может быть null, Значение поля должно быть больше 0
-    private static HashSet<String> allPartNumbers = new HashSet<>();
+    private Float price;
     private String partNumber; //Значение этого поля должно быть уникальным, Длина строки не должна быть больше 51, Длина строки должна быть не меньше 23, Поле может быть null
     private Double manufactureCost; //Поле может быть null
-    private UnitOfMeasure unitOfMeasure; //Поле не может быть null
-    private Person owner; //Поле не может быть null
+    private String unitOfMeasure; //Поле не может быть null
+    private String personName;
+    private float personHeight;
+    private String personEyeColor;
+    private String nationality;
+    private int userId;
 
 
     public Product() {
-        id = nextId;
         creationDate = new Date();
     }
 
-    /**
-     * Основной конструктор.
-     * Проверяет, соответствуют ли значения требованиям полей. В случае, когда значения не удовлетворяют требованиям выбрасывает исключение UnexceptableValue.
-     *
-     * @param name имя, не может являться null
-     * @param coordinates координаты продукта, не могут являться null
-     * @param price цена, должна быть больше 0
-     * @param partNumber партийный номер, должен быть длиннее 23 и короче 51 символа (может являться null)
-     * @param manufactureCost стоимость производства, должна быть больше 0
-     * @param unitOfMeasure единица измерения, не может являться null
-     * @param owner владелец продукта, не может являться null
-     */
-    public Product(int id, String name, Coordinates coordinates, float price,
-                   String partNumber, Double manufactureCost, UnitOfMeasure unitOfMeasure,
-                   Person owner) {
-        this.id = id;
 
+    public Product(String name, double x, double y, float price,
+                   String partNumber, Double manufactureCost, String unitOfMeasure,
+                   String pName, float height, String color, String nationality) {
         setName(name);
-        setCoordinates(coordinates);
+        setX(x);
+        setY(y);
 
         creationDate = new Date();
 
@@ -54,8 +59,10 @@ public class Product implements Comparable<Product>, Printable, Serializable {
         this.manufactureCost = manufactureCost;
 
         setUnitOfMeasure(unitOfMeasure);
-        setOwner(owner);
-
+        this.personName = pName;
+        this.personHeight = height;
+        this.personEyeColor = color;
+        this.nationality = nationality;
     }
 
     public int getId() {return id;}
@@ -64,7 +71,9 @@ public class Product implements Comparable<Product>, Printable, Serializable {
 
     public String getPartNumber() {return partNumber;}
 
-    public Coordinates getCoordinates() {return coordinates;}
+    public double getX() {return x;}
+
+    public double getY() {return y;}
 
     public Date getCreationDate() {return creationDate;}
 
@@ -72,23 +81,26 @@ public class Product implements Comparable<Product>, Printable, Serializable {
 
     public Double getManufactureCost() {return manufactureCost;}
 
-    public UnitOfMeasure getUnitOfMeasure() {return unitOfMeasure;}
+    public int getUserId() {return userId;}
 
-    public Person getOwner() {return owner;}
+    public String getUnitOfMeasure() {return unitOfMeasure;}
 
     public void setId(int id) {this.id = id;}
 
     public void setName(String name) {
         if (name == null || name.equals("")){
-            //throw new app.UnexceptibleValue("name");
+            throw new app.exceptions.UnexceptableValue("name");
         } else {
             this.name = name;
         }
     }
 
-    public void setCoordinates(Coordinates coordinates) {
-        if (coordinates == null) throw new app.exceptions.UnexceptableValue("coordinates");
-        else this.coordinates = coordinates;
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public void setY(double y) {
+        this.y = y;
     }
 
     public void setPrice(float price) {
@@ -96,39 +108,28 @@ public class Product implements Comparable<Product>, Printable, Serializable {
         else this.price = Float.valueOf(price);
     }
 
-    public void setPartNumber(String partNumber) {
-        if (partNumber == null ||
-                ((!allPartNumbers.contains(partNumber)) && partNumber.length() <= 51 && partNumber.length() >= 23) ||
-            partNumber.equals("null")) {
-            allPartNumbers.add(partNumber);
-            this.partNumber = partNumber;
-        } else {
-            throw new app.exceptions.UnexceptableValue("partNumber");
-        }
-    }
-
     public void setManufactureCost(Double manufactureCost) {
         this.manufactureCost = manufactureCost;
     }
 
-    public void setUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
+    public void setUnitOfMeasure(String unitOfMeasure) {
         if (unitOfMeasure == null) throw new app.exceptions.UnexceptableValue("unitOfMasure");
         else this.unitOfMeasure = unitOfMeasure;
     }
 
-    public void setOwner(Person owner) {
-        if (owner == null) throw new app.exceptions.UnexceptableValue("owner");
-        else this.owner = owner;
+
+
+    public void setOwnerName(String ownerName) {
+        if (ownerName == null) throw new app.exceptions.UnexceptableValue("owner");
+        else this.personName = ownerName;
     }
 
-    /**
-     * Проверяет, занят ли указанный партинъйный номер.
-     *
-     * @param number партийный номер для проверки
-     * @return true, если номер занят, в противном случае false
-     */
-    public static boolean isPartNumberBusy(String number) {
-        return allPartNumbers.contains(number);
+    public void setPartNumber(String partNumber) {
+        this.partNumber = partNumber;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     @Override
@@ -141,13 +142,14 @@ public class Product implements Comparable<Product>, Printable, Serializable {
         return name + "=[" +
                 "id=" + id +
                 ", name=" + name
-                + ", coordinates=" + coordinates
+                + ", coordinates=[" + x + ", " +y + "]"
                 + ", creation date=" + creationDate
                 + ", price=" + price
                 + ", part number=" + partNumber
                 + ", manufacture cost=" + manufactureCost
                 + ", unit of measure=" + unitOfMeasure
-                + ", owner=" + owner
+                + ", owner=" + personName +
+                "[" + personEyeColor + ", " + personHeight + ", " + personEyeColor + ", " + nationality + "]"
                 + "]";
     }
 
@@ -157,13 +159,18 @@ public class Product implements Comparable<Product>, Printable, Serializable {
                 "---------------------------------------------" +
                 "\nid: " + id +
                 "\nname: " + name
-                + "\ncoordinates: " + coordinates.print()
+                + "\ncoordinates: [" + x + ", "  + y + "]"
                 + "\ncreation date: " + creationDate
                 + "\nprice: " + price
                 + "\npart number: " + partNumber
                 + "\nmanufacture cost: " + manufactureCost
                 + "\nunit of measure: " + unitOfMeasure
-                + "\nowner: " + owner.print()
+                + "\nowner:\n++++++++++++++++" +
+                "\nname: " + personName
+                + "\nheight: " + personHeight
+                + "\neyes color: " + personEyeColor
+                + "\nnationality: " + personName
+                + "\n++++++++++++++++"
                 + "\n---------------------------------------------";
     }
 

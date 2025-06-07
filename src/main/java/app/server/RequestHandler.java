@@ -8,8 +8,10 @@ import app.messages.response.MessageResp;
 import app.messages.response.ProductsResp;
 import app.messages.response.Response;
 import app.product.*;
+import app.server.database.Database;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.Socket;
 import java.sql.SQLException;
@@ -19,13 +21,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class RequestHandler extends Thread {
-    private Request request;
-    private CollectionManager collection;
-    private ExecutorService sendPool;
-    private Socket sock;
+    private final Request request;
+    private final Database database;
+    private final ExecutorService sendPool;
+    private final Socket sock;
 
-    public RequestHandler(Request request, CollectionManager collection, ExecutorService sendPool, Socket sock) {
-        this.collection = collection;
+    public RequestHandler(Request request, Database database, ExecutorService sendPool, Socket sock) {
+        this.database = database;
         this.request = request;
         this.sock = sock;
         this.sendPool = sendPool;
@@ -36,7 +38,6 @@ public class RequestHandler extends Thread {
     public void run() {
         try {
             Response resp = handleRequest(request);
-
             Runnable sender = new ResponseSender(resp, sock);
             sendPool.execute(sender);
         } catch (Exception e) {
@@ -73,10 +74,10 @@ public class RequestHandler extends Thread {
      */
     public Response removeIf(RemoveReq req) {
         String message;
-        if (collection.removeIf(req.getLogin(), req.getPassword(), req.getPredicate())) {
+        if (database.removeIf(req.getPredicate(), req.getLogin(), req.getPassword())) {
             message = "Продукт(ы) успешно удален(ы).";
         } else {
-            message = "Не нашёл подходящих продуктов или отказано в доступе(.";
+            message = "Не нашёл подходящих продуктов, которые вы имеете право удалить.";
         }
         return new MessageResp(message);
     }
@@ -88,7 +89,7 @@ public class RequestHandler extends Thread {
      * @return ответ, содержащий список продуктов
      */
     public Response getIf(GetReq req) {
-        List<Product> list = collection.getIf(req.getPredicate());
+        List<Product> list = database.getIf(req.getPredicate());
         return new ProductsResp(list);
     }
 
@@ -97,10 +98,9 @@ public class RequestHandler extends Thread {
      *
      * @return ответ, содержащий строковую информацию о коллекции.
      */
+    @Transactional
     public Response getInfo() {
-        String resp = "Данные о коллекции:" +
-                "\nтип: " + collection.getCollectionName() +
-                "\nколичество элементов: " + collection.getSize();
+        String resp = "В базе данных находятся: " + database.getProductsCount() + " продуктов.";
 
         return new MessageResp(resp);
     }
@@ -122,10 +122,13 @@ public class RequestHandler extends Thread {
         double y;
         float price;
         UnitOfMeasure unitOfMeasure;
+        String unitOfMeasureString;
         String ownerName;
         float height;
+        String eyeColorString;
         Color eyeColor;
         Country nationality;
+        String nationalityString;
         try {
             JsonNode jsonNode = oM.readTree(jsonMessage);
 
@@ -138,26 +141,28 @@ public class RequestHandler extends Thread {
 
             manufactureCost = jsonNode.get("manufactureCost").asDouble();
 
-            String unitOfMeasureString = jsonNode.get("unitOfMeasure").asText();
+            unitOfMeasureString = jsonNode.get("unitOfMeasure").asText();
             unitOfMeasure = getEnum(unitOfMeasureString, UnitOfMeasure.values());
 
             ownerName = jsonNode.get("ownerName").asText();
 
             height = (float) jsonNode.get("height").asDouble();
 
-            String eyeColorString = jsonNode.get("eyeColor").asText();
+            eyeColorString = jsonNode.get("eyeColor").asText();
             eyeColor = getEnum(eyeColorString, Color.values());
 
-            String nationalityString = jsonNode.get("nationality").asText();
+            nationalityString = jsonNode.get("nationality").asText();
             nationality = getEnum(nationalityString, Country.values());
 
         } catch (Exception e) {
             throw new RequestReadingException(RequestType.ADD, e);
         }
 
+        Product p = new Product(name, x, y, price, partNumber, manufactureCost, unitOfMeasureString,
+                ownerName, height, eyeColorString, nationalityString);
+
         String mes;
-        if (collection.add(req.getLogin(), req.getPassword(),new Product(0, name, new Coordinates(x, y), price, partNumber, manufactureCost,
-                unitOfMeasure, new Person(ownerName, height, eyeColor, nationality)))) {
+        if (database.addProduct(p, req.getLogin(), req.getPassword())) {
             mes = "***Продукт " + name + " успешно добавлен в коллекцию***";
         } else {
             mes = "***Не удалось добавить объект в коллекцию***";
@@ -185,10 +190,13 @@ public class RequestHandler extends Thread {
         double x;
         double y;
         float price;
+        String unitOfMeasureString;
         UnitOfMeasure unitOfMeasure;
         String ownerName;
         float height;
+        String eyeColorString;
         Color eyeColor;
+        String nationalityString;
         Country nationality;
         try {
             JsonNode jsonNode = oM.readTree(jsonMessage);
@@ -203,36 +211,37 @@ public class RequestHandler extends Thread {
 
             manufactureCost = jsonNode.get("manufactureCost").asDouble();
 
-            String unitOfMeasureString = jsonNode.get("unitOfMeasure").asText();
+            unitOfMeasureString = jsonNode.get("unitOfMeasure").asText();
             unitOfMeasure = getEnum(unitOfMeasureString, UnitOfMeasure.values());
 
             ownerName = jsonNode.get("ownerName").asText();
 
             height = (float) jsonNode.get("height").asDouble();
 
-            String eyeColorString = jsonNode.get("eyeColor").asText();
+            eyeColorString = jsonNode.get("eyeColor").asText();
             eyeColor = getEnum(eyeColorString, Color.values());
 
-            String nationalityString = jsonNode.get("nationality").asText();
+            nationalityString = jsonNode.get("nationality").asText();
             nationality = getEnum(nationalityString, Country.values());
 
         } catch (Exception e) {
             throw new RequestReadingException(RequestType.ADD, e);
         }
 
-        Product product = collection.getIf(p -> p.getId() == id).get(0);
-        if (product == null) {
-            return new MessageResp("Не нашёл продукта с указанным id(");
-        }
+        Product p = new Product(name, x, y, price, partNumber, manufactureCost,
+                unitOfMeasureString, ownerName, height, eyeColorString, nationalityString);
+        p.setId(id);
 
-        product.setName(name);
-        product.setCoordinates(new Coordinates(x, y));
-        product.setPartNumber(partNumber);
-        product.setManufactureCost(manufactureCost);
-        product.setUnitOfMeasure(unitOfMeasure);
-        product.setPrice(price);
-        product.setOwner(new Person(ownerName, height, eyeColor, nationality));
-        return new MessageResp("***Данные продукта "+ name + " успешно обновлены***");
+        String message;
+        int result = database.updateProduct(p, req.getLogin(), request.getPassword());
+        if (result == 1) {
+            message = "***Данные продукта "+ name + " успешно обновлены***";
+        } else if (result == -1) {
+            message = "***Отказано в доступе к продукту с данным id***";
+        } else {
+            message = "Не нашёл продукта с указанным id(";
+        }
+        return new MessageResp(message);
 
     }
 
@@ -257,10 +266,10 @@ public class RequestHandler extends Thread {
             String login = req.getLogin();
             String password = req.getPassword();
 
-            if (collection.register(req.getLogin(), req.getPassword())) {
+            if (database.register(req.getLogin(), req.getPassword())) {
                 return new AccessResp(login, password);
             } else {
-                return new MessageResp("Не удалось зарегистрировать пользователя. Данный логин жуе занят.");
+                return new MessageResp("Не удалось зарегистрировать пользователя. Данный логин уже занят.");
             }
         } catch (Exception e) {
             throw new UnknownException(e);
@@ -272,7 +281,7 @@ public class RequestHandler extends Thread {
         String login = req.getLogin();
         String password = req.getPassword();
 
-        if (collection.auth(login, password)) {
+        if (database.auth(login, password)) {
             return new AccessResp(login, password);
         } else {
             return new MessageResp("Ошибка авторизации. Указан неправильный логин или пароль.");
