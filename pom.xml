@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.example</groupId>
-  <artifactId>lab7</artifactId>
+  <artifactId>lab8</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -41,18 +41,20 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.13.4.2</version>
+      <version>2.14.1</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.12.4</version>
+      <version>2.14.1</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.12.4</version>
+      <version>2.14.1</version>
     </dependency>
+
+
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
@@ -64,6 +66,13 @@
       <artifactId>flyway-database-postgresql</artifactId>
       <version>11.8.2</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <version>11.8.2</version>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -74,7 +83,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>app.server.Server</mainClass>
+              <mainClass>app.server.Application</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -84,14 +93,19 @@
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version> <!-- Use the latest version -->
-        <configuration>
-          <source>17</source> <!-- Set to Java 17 or any version >= 14 -->
-          <target>17</target> <!-- Set to Java 17 or any version >= 14 -->
-        </configuration>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
+
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-compiler-plugin</artifactId>-->
+<!--        <version>3.13.0</version> &lt;!&ndash; Use the latest version &ndash;&gt;-->
+<!--        <configuration>-->
+<!--          <source>17</source> &lt;!&ndash; Set to Java 17 or any version >= 14 &ndash;&gt;-->
+<!--          <target>17</target> &lt;!&ndash; Set to Java 17 or any version >= 14 &ndash;&gt;-->
+<!--        </configuration>-->
+<!--      </plugin>-->
 
       <plugin>
         <groupId>org.flywaydb</groupId>
@@ -99,14 +113,14 @@
         <version>11.3.2</version> <!-- Стабильная версия -->
       </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.11.2</version>
-        <configuration>
-          <show>public</show>
-        </configuration>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-javadoc-plugin</artifactId>-->
+<!--        <version>3.11.2</version>-->
+<!--        <configuration>-->
+<!--          <show>public</show>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
 
       <plugin>
         <groupId>org.flywaydb</groupId>

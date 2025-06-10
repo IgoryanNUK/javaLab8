@@ -1,7 +1,6 @@
 package app.server.database;
 
-
-import org.apache.catalina.User;
+import app.product.UserEntity;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

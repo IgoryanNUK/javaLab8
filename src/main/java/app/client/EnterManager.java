@@ -110,7 +110,7 @@ public class EnterManager {
                 if (pN.equals("")) {
                     pN = null;
                     isEntered = true;
-                } else if (!Product.isPartNumberBusy(pN) && pN.length() >= 23 && pN.length() <= 51) {
+                } else if (pN.length() >= 23 && pN.length() <= 51) {
                     isEntered = true;
                 } else {
                     io.println(wem);

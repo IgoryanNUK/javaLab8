@@ -1,9 +1,6 @@
 package app.product;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -22,15 +19,16 @@ import java.util.HashSet;
 @DynamicInsert
 public class Product implements Comparable<Product>, Printable, Serializable {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
     private double x;
     private double y;
+
     private final Date creationDate; //Поле не может быть null, Значение этого поля должно генерироваться автоматически
     private Float price;
-    private String partNumber; //Значение этого поля должно быть уникальным, Длина строки не должна быть больше 51, Длина строки должна быть не меньше 23, Поле может быть null
-    private Double manufactureCost; //Поле может быть null
+    private String partNumber;
+    private Double manufactureCost;
     private String unitOfMeasure; //Поле не может быть null
     private String personName;
     private float personHeight;

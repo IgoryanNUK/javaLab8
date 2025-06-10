@@ -13,7 +13,7 @@ import java.util.HashMap;
 public class CommandManager {
     private final HashMap<String, Command> commands = new HashMap<>();
     private final ArrayDeque<String> history = new ArrayDeque<>(14);
-    private Client app;
+    private final Client app;
 
 
    public CommandManager(Client app) {

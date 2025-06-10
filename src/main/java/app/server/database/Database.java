@@ -1,15 +1,12 @@
 package app.server.database;
 
-import app.exceptions.UnknownException;
-import app.product.*;
-import org.apache.catalina.User;
+import app.product.Product;
+import app.product.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,10 +15,10 @@ import java.util.function.Predicate;
 
 @Service
 public class Database {
-    private final CrudRepository<Product, Integer> productDao;
+    private final ProductsRepository productDao;
     private final UserDAO userDao;
 
-    public Database(@Autowired CrudRepository<Product, Integer> pDAO,
+    public Database(@Autowired ProductsRepository pDAO,
                     @Autowired UserDAO uDAO) {
         this.userDao = uDAO;
         this.productDao = pDAO;
@@ -33,21 +30,21 @@ public class Database {
 
 
     public void createTables() throws SQLException {
-        executeUpdate("create table users (id serial primary key, name text, password text)");
-        executeUpdate("create table products(id serial primary key," +
-                "name text not null," +
-                "x double precision not null," +
-                "y double precision not null," +
-                "creationDate TIMESTAMPTZ not null," +
-                "price float4 not null check (price > 0)," +
-                "partNumber text null unique check(length(partNumber) between 23 and 51 or partNumber = null)," +
-                "manufactureCost double precision null check (manufactureCost >= 0)," +
-                "unitOfMeasure varchar(20) not null check (unitOfMeasure IN ('METERS', 'CENTIMETERS', 'PCS', 'LITERS', 'MILLIGRAMS'))," +
-                "personName text," +
-                "personHeight float4," +
-                "eyeColor varchar(20) not null check (eyeColor IN ('GREEN', 'YELLOW', 'ORANGE', 'BROWN'))," +
-                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN', null))," +
-                "userId serial references users(id))");
+//        executeUpdate("create table users (id serial primary key, name text, password text)");
+//        executeUpdate("create table products(id serial primary key," +
+//                "name text not null," +
+//                "x double precision not null," +
+//                "y double precision not null," +
+//                "creationDate TIMESTAMPTZ not null," +
+//                "price float4 not null check (price > 0)," +
+//                "partNumber text null unique check(length(partNumber) between 23 and 51 or partNumber = null)," +
+//                "manufactureCost double precision null check (manufactureCost >= 0)," +
+//                "unitOfMeasure varchar(20) not null check (unitOfMeasure IN ('METERS', 'CENTIMETERS', 'PCS', 'LITERS', 'MILLIGRAMS'))," +
+//                "personName text," +
+//                "personHeight float4," +
+//                "eyeColor varchar(20) not null check (eyeColor IN ('GREEN', 'YELLOW', 'ORANGE', 'BROWN'))," +
+//                "nationality varchar(20) null check (nationality in ('RUSSIA', 'GERMANY', 'FRANCE', 'SOUTH_KOREA', 'JAPAN', null))," +
+//                "userId serial references users(id))");
     }
 
     /**
@@ -191,6 +188,8 @@ public class Database {
      */
     @Transactional
     public boolean register(String login, String password) throws SQLException {
+
+        System.out.println(login + " " + password);
         Optional<UserEntity> opt = userDao.findByName(login);
         boolean res;
         if (opt.isEmpty()) {
@@ -205,6 +204,8 @@ public class Database {
 
 
     public boolean auth(String login, String password) {
+
+        System.out.println(login + " " + password);
         boolean resp;
 
         Optional<UserEntity> opt = userDao.findByName(login);
@@ -216,23 +217,5 @@ public class Database {
         }
 
         return resp;
-    }
-
-
-    /**
-     * Выполняет запрос, связанный с изменением таблицы базы данных.
-     *
-     * @param query текст запроса
-     * @return количество изменённых строк
-     */
-    public int executeUpdate(String query) throws SQLException {
-        try(Connection connection = DriverManager.getConnection(connectionAddress, user, password)) {
-            Statement statement = connection.createStatement();
-            statement.execute(query);
-            int count = statement.getUpdateCount();
-            statement.close();
-            connection.close();
-            return count;
-        }
     }
 }

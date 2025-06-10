@@ -46,14 +46,15 @@ public class Server {
             this.database = database;
 
 
+            System.out.println("*authorisation succeed*");
+
+            connection = new ConnetionGetter(server);
+
+
             for (int i = 0; i < 5; i++) {
                 RequestGetter getter = new RequestGetter(connection, database, executePool, sendPool);
                 readPool.execute(getter);
             }
-
-            System.out.println("*authorisation succeed*");
-
-            connection = new ConnetionGetter(server);
             logger.info("Start success");
         } catch (Exception e) {
             e.printStackTrace();

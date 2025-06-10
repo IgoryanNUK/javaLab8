@@ -5,12 +5,14 @@ import app.client.UserIOManager;
 import app.messages.requests.RegistrationReq;
 import app.messages.requests.Request;
 
+import java.security.MessageDigest;
+
 public class Register extends Command {
     {
         name = "register";
         description = "Регистрация нового пользователя.";
     }
-    private Client app;
+    private final Client app;
 
     public Register(Client app) {
         this.app = app;
@@ -32,7 +34,15 @@ public class Register extends Command {
         }
 
         if (pswd.equals(io.ask("Подтвердите пароль: "))) {
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA-1");
+                pswd = new String(md.digest(pswd.getBytes("UTF-8")));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
             app.setLoginAndPassword(login, pswd);
+
             return new RegistrationReq(login, pswd);
         } else {
             io.println("Пароли не совпадают( Пожалуйста, повторите регистрацию.");

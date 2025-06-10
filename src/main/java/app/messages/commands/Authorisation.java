@@ -6,14 +6,15 @@ import app.messages.requests.AuthReq;
 import app.messages.requests.RegistrationReq;
 import app.messages.requests.Request;
 
+import java.security.MessageDigest;
+
 public class Authorisation extends Command {
 
     {
         name = "auth";
         description = "Авторизация";
     }
-
-    private Client app;
+    private final Client app;
 
     public Authorisation(Client app) {
         this.app = app;
@@ -32,6 +33,12 @@ public class Authorisation extends Command {
             } else {
                 break;
             }
+        }
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            pswd = new String(md.digest(pswd.getBytes("UTF-8")));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         app.setLoginAndPassword(login, pswd);

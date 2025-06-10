@@ -16,10 +16,10 @@ public class FilterGreaterThanUOM extends Command {
     public Request prepareRequest(String[] args, UserIOManager ioManager) {
         if (args.length !=2) throw new WrongCommandFormat(name);
 
-        final UnitOfMeasure request;
+        final String request;
         for (UnitOfMeasure u : UnitOfMeasure.values()) {
             if (u.toString().equals(args[1])) {
-                request = u;
+                request = u.toString();
                 return new GetReq(p -> p.getUnitOfMeasure().compareTo(request) < 0);
             }
         }

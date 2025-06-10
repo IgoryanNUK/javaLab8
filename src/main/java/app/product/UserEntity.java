@@ -1,9 +1,6 @@
-package app.server.database;
+package app.product;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -11,10 +8,18 @@ import lombok.Data;
 @Data
 public class UserEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private final String name;
-    private final String password;
+
+    @Column(name = "name")
+    private String name = null;
+
+    @Column(name = "password")
+    private String password = null;
+
+    public UserEntity() {
+
+    }
 
     public UserEntity(String name, String password) {
         this.name = name;
