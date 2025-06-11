@@ -18,15 +18,10 @@ public class UserEntity {
     private String password = null;
 
     public UserEntity() {
-
     }
 
     public UserEntity(String name, String password) {
         this.name = name;
         this.password = password;
     }
-
-    public int getId() {return id;}
-
-    public String getPassword() {return password;}
 }

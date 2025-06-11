@@ -1,17 +1,14 @@
-package app.messages.response;
+package app.server.services;
 
 /**
  * Ответ сервера, содержащий текстовое сообщение.
  */
-public class MessageResp implements Response {
+public class MessageResp {
     private final String message;
 
     public MessageResp(String message) {
         this.message= message;
     }
-
-    @Override
-    public ResponseType getType() {return null;}
 
     public String getMessage() {return message;}
 }

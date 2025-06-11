@@ -1,14 +1,11 @@
 package app.server;
 
 import app.messages.requests.Request;
-import app.messages.response.Response;
 import app.server.database.Database;
+import app.server.services.RequestHandler;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 public class RequestGetter implements Runnable {
@@ -30,8 +27,7 @@ public class RequestGetter implements Runnable {
             try {
                 Socket sock = connection.getConnection();
                 Request req = read(sock);
-                RequestHandler handler = new RequestHandler(req, database, sendPool, sock);
-                executePool.execute(handler);
+                RequestHandler handler = new RequestHandler(database);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

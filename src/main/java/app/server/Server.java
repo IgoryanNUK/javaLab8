@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-@Service
+
 public class Server {
     private final int port = 4027;
     private ServerSocket server;
